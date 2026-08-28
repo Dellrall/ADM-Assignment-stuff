@@ -136,8 +136,13 @@ CREATE OR REPLACE PROCEDURE sp_register_or_renew_member (
     v_expiry DATE := NULL;
 BEGIN
     -- Input Validation & Format Constraints
+    -- Input Validation & Format Constraints
     IF p_name IS NULL OR LENGTH(TRIM(p_name)) < 2 THEN
         RAISE_APPLICATION_ERROR(-20012, 'Validation Error: Member Name must be at least 2 characters.');
+    END IF;
+
+    IF p_password IS NULL OR LENGTH(p_password) < 6 THEN
+        RAISE_APPLICATION_ERROR(-20014, 'Validation Error: Password must be at least 6 characters.');
     END IF;
 
     IF NOT REGEXP_LIKE(p_email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$') THEN
@@ -213,6 +218,11 @@ CREATE OR REPLACE PROCEDURE sp_process_point_redemption (
     v_voucher_exp   Voucher.ExpiryDate%TYPE;
     v_order_status  CustomerOrder.OrderStatus%TYPE;
 BEGIN
+    -- 0. Input Parameter Validation
+    IF p_member_id <= 0 OR p_voucher_id <= 0 OR p_order_id <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20015, 'Validation Error: Member ID, Voucher ID, and Order ID must be positive integers.');
+    END IF;
+
     -- 1. Fetch Member Details
     SELECT MemberPoint, MemberStatus INTO v_member_points, v_member_status
     FROM Member WHERE MemberID = p_member_id;
@@ -363,6 +373,11 @@ CREATE OR REPLACE PROCEDURE rpt_member_annual_statement (
     v_total_pts_used NUMBER := 0;
     v_order_count NUMBER := 0;
 BEGIN
+    IF p_member_id <= 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Validation Error: Member ID must be a positive integer.');
+        RETURN;
+    END IF;
+
     OPEN c_member;
     FETCH c_member INTO r_mem;
     

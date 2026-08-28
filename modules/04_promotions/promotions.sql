@@ -132,6 +132,15 @@ CREATE OR REPLACE PROCEDURE sp_create_promotional_campaign (
     v_item_price  Item.Price%TYPE;
     v_item_status Item.ItemStatus%TYPE;
 BEGIN
+    -- 0. Input Parameter Validation
+    IF p_item_id <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20312, 'Validation Error: Item ID must be a positive integer.');
+    END IF;
+
+    IF p_start_date IS NULL OR p_end_date IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20313, 'Validation Error: Campaign StartDate and EndDate cannot be NULL.');
+    END IF;
+
     -- 1. Date Validation
     IF p_end_date <= p_start_date THEN
         RAISE e_invalid_dates;
@@ -211,6 +220,10 @@ CREATE OR REPLACE PROCEDURE sp_apply_order_promo_discount (
         WHERE od.OrderID = p_order_id
           AND SYSDATE BETWEEN p.StartDate AND p.EndDate;
 BEGIN
+    IF p_order_id <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20314, 'Validation Error: Order ID must be a positive integer.');
+    END IF;
+
     SELECT OrderStatus INTO v_order_status
     FROM CustomerOrder
     WHERE OrderID = p_order_id;
@@ -358,6 +371,11 @@ CREATE OR REPLACE PROCEDURE rpt_promotion_sales_audit (
     v_total_units NUMBER := 0;
     v_total_saved NUMBER := 0;
 BEGIN
+    IF p_promo_id <= 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Validation Error: Promotion ID must be a positive integer.');
+        RETURN;
+    END IF;
+
     OPEN c_promo;
     FETCH c_promo INTO r_p;
     IF c_promo%NOTFOUND THEN

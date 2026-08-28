@@ -254,6 +254,15 @@ CREATE OR REPLACE PROCEDURE sp_adjudicate_refund (
     v_current_stat Refund.RefundStatus%TYPE;
     v_order_id     Refund.OrderID%TYPE;
 BEGIN
+    -- Input Parameter Validation
+    IF p_refund_id <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20415, 'Validation Error: Refund ID must be a positive integer.');
+    END IF;
+
+    IF p_remark IS NULL OR LENGTH(TRIM(p_remark)) < 3 THEN
+        RAISE_APPLICATION_ERROR(-20416, 'Validation Error: Adjudication remark must be provided (minimum 3 characters).');
+    END IF;
+
     IF p_decision NOT IN ('Approved', 'Rejected') THEN
         RAISE e_invalid_decision;
     END IF;
@@ -366,6 +375,11 @@ CREATE OR REPLACE PROCEDURE rpt_refund_claim_dossier (
 
     r_ref c_refund_hdr%ROWTYPE;
 BEGIN
+    IF p_refund_id <= 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Validation Error: Refund ID must be a positive integer.');
+        RETURN;
+    END IF;
+
     OPEN c_refund_hdr;
     FETCH c_refund_hdr INTO r_ref;
     IF c_refund_hdr%NOTFOUND THEN
@@ -435,6 +449,11 @@ CREATE OR REPLACE PROCEDURE rpt_branch_quality_audit (
     v_total_loss NUMBER := 0;
     v_claim_cnt  NUMBER := 0;
 BEGIN
+    IF p_branch_id <= 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Validation Error: Branch ID must be a positive integer.');
+        RETURN;
+    END IF;
+
     OPEN c_branch;
     FETCH c_branch INTO r_b;
     IF c_branch%NOTFOUND THEN

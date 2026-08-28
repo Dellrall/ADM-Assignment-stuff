@@ -157,6 +157,11 @@ CREATE OR REPLACE PROCEDURE sp_create_pickup_order (
     v_br_addr    Branch.Address%TYPE;
     v_pickup_id  NUMBER;
 BEGIN
+    -- 0. Input Parameter Validation
+    IF p_member_id <= 0 OR p_branch_id <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20214, 'Validation Error: Member ID and Branch ID must be positive integers.');
+    END IF;
+
     -- 1. Validate Member
     SELECT MemberStatus INTO v_mem_status FROM Member WHERE MemberID = p_member_id;
     IF v_mem_status <> 'Active' THEN
@@ -372,6 +377,11 @@ CREATE OR REPLACE PROCEDURE rpt_order_tax_invoice (
     v_total_discount NUMBER := 0;
     v_item_count NUMBER := 0;
 BEGIN
+    IF p_order_id <= 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Validation Error: Order ID must be a positive integer.');
+        RETURN;
+    END IF;
+
     OPEN c_order_hdr;
     FETCH c_order_hdr INTO r_hdr;
     IF c_order_hdr%NOTFOUND THEN
@@ -451,6 +461,11 @@ CREATE OR REPLACE PROCEDURE rpt_branch_daily_manifest (
 
     r_br c_branch%ROWTYPE;
 BEGIN
+    IF p_branch_id <= 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Validation Error: Branch ID must be a positive integer.');
+        RETURN;
+    END IF;
+
     OPEN c_branch;
     FETCH c_branch INTO r_br;
     IF c_branch%NOTFOUND THEN

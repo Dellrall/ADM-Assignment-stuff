@@ -148,6 +148,11 @@ CREATE OR REPLACE PROCEDURE sp_receive_purchase_order (
         FROM PurchaseOrderItem
         WHERE PurchaseOrderID = p_po_id;
 BEGIN
+    -- 0. Input Parameter Validation
+    IF p_po_id <= 0 OR p_employee_id <= 0 OR p_branch_id <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20114, 'Validation Error: Purchase Order ID, Employee ID, and Branch ID must be positive integers.');
+    END IF;
+
     -- 1. Validate PO Existence and Status
     SELECT Status INTO v_po_status
     FROM PurchaseOrder
@@ -264,6 +269,10 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20113, 'Validation Error: AdjustmentType must be Damaged, Expired, Audit Write-off, or Audit Correction.');
     END IF;
 
+    IF p_remarks IS NULL OR LENGTH(TRIM(p_remarks)) < 3 THEN
+        RAISE_APPLICATION_ERROR(-20115, 'Validation Error: Remarks must provide an audit reason (minimum 3 characters).');
+    END IF;
+
     IF p_qty_damaged <= 0 THEN
         RAISE e_invalid_qty;
     END IF;
@@ -374,6 +383,11 @@ CREATE OR REPLACE PROCEDURE rpt_branch_inventory_audit (
     v_total_val   NUMBER := 0;
     v_low_stock   NUMBER := 0;
 BEGIN
+    IF p_branch_id <= 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Validation Error: Branch ID must be a positive integer.');
+        RETURN;
+    END IF;
+
     OPEN c_branch;
     FETCH c_branch INTO r_br;
     IF c_branch%NOTFOUND THEN
@@ -462,6 +476,11 @@ CREATE OR REPLACE PROCEDURE rpt_supplier_procurement_audit (
     v_po_total NUMBER;
     v_grand_spend NUMBER := 0;
 BEGIN
+    IF p_supplier_id <= 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Validation Error: Supplier ID must be a positive integer.');
+        RETURN;
+    END IF;
+
     OPEN c_sup;
     FETCH c_sup INTO r_sup;
     IF c_sup%NOTFOUND THEN
