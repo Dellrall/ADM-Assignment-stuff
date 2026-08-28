@@ -81,123 +81,74 @@ GROUP BY p.PromotionID, p.DiscountAmount, p.StartDate, p.EndDate;
 
 -- -----------------------------------------------------------------------------
 -- -----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL and OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
 
--- -----------------------------------------------------------------------------
--- SQL*PLUS TERMINAL and COLUMN FORMATTING (COMPACT HALF-SCREEN ALIGNMENT)
--- -----------------------------------------------------------------------------
-SET LINESIZE 120;
+SET LINESIZE 200;
 SET PAGESIZE 100;
-SET FEEDBACK OFF;
+SET FEEDBACK ON;
 SET RECSEP OFF;
 SET DEFINE OFF;
 
--- Formatting for Query 1
+-- Column formatting for Query 1
 COLUMN "Promo ID"             FORMAT 9999       HEADING "ID";
 COLUMN "Start Date"           FORMAT A11        HEADING "Start Date";
 COLUMN "End Date"             FORMAT A11        HEADING "End Date";
-COLUMN "Items"                FORMAT 9999       HEADING "SKUs";
+COLUMN "Items Included"       FORMAT 9999       HEADING "SKUs";
 COLUMN "Units Sold"           FORMAT 99999      HEADING "Units";
-COLUMN "Gross Revenue"        FORMAT A14        HEADING "Gross Rev";
-COLUMN "Total Discount"       FORMAT A14        HEADING "Total Disc";
-COLUMN "Health Tier"          FORMAT A18        HEADING "Campaign Tier";
-
--- Formatting for Query 1 Summary
-COLUMN "Total Campaigns"      FORMAT 999999     HEADING "Campaigns";
-COLUMN "Total Promo Units Sold" FORMAT 999999   HEADING "Units Sold";
-COLUMN "Total Gross Promo Sales" FORMAT A16     HEADING "Gross Revenue";
-COLUMN "Total Discounts Given" FORMAT A16       HEADING "Discounts Given";
-COLUMN "Effective Discount Rate" FORMAT A14     HEADING "Eff Disc Rate";
-
--- Formatting for Query 2
-COLUMN "Promo"                FORMAT 9999       HEADING "ID";
-COLUMN "Item"                 FORMAT 9999       HEADING "Item";
-COLUMN "Product Description"  FORMAT A18        HEADING "Product";
-COLUMN "Brand"                FORMAT A12        HEADING "Brand";
-COLUMN "Base Price"           FORMAT A10        HEADING "Base Price";
-COLUMN "Promo Price"          FORMAT A10        HEADING "Promo Price";
-COLUMN "Discount %"           FORMAT A10        HEADING "Margin Cut";
-COLUMN "Promo Status"         FORMAT A14        HEADING "Time Left";
-
--- Formatting for Query 2 Summary
-COLUMN "Active Promoted SKUs" FORMAT 999999     HEADING "Promoted SKUs";
-COLUMN "Avg Base Price"       FORMAT A14        HEADING "Avg Base Price";
-COLUMN "Avg Promo Price"      FORMAT A14        HEADING "Avg Promo Price";
-COLUMN "Avg Margin Cut"       FORMAT A12        HEADING "Avg Disc %";
-COLUMN "Max Discount Offered" FORMAT A12        HEADING "Max Disc %";
-
+COLUMN "Gross Revenue"        FORMAT A16        HEADING "Gross Revenue";
+COLUMN "Total Discount"       FORMAT A16        HEADING "Total Discount";
+COLUMN "Performance Category" FORMAT A22        HEADING "Performance Tier";
 
 PROMPT
 PROMPT ========================================================================================
 PROMPT [TASK 4 - QUERY 1] STRATEGIC: PROMOTION CAMPAIGN REVENUE AND DISCOUNT ABSORPTION
-PROMPT Purpose: Evaluates campaign profitability, unit velocity, and gross revenue generated.
 PROMPT ========================================================================================
 SELECT 
     v.PromotionID AS "Promo ID",
     TO_CHAR(v.StartDate, 'YYYY-MM-DD') AS "Start Date",
     TO_CHAR(v.EndDate, 'YYYY-MM-DD') AS "End Date",
-    v.PromotedItemCount AS "Items",
+    v.PromotedItemCount AS "Items Included",
     v.TotalUnitsSold AS "Units Sold",
     TO_CHAR(v.CampaignRevenue, 'FM99,990.00') AS "Gross Revenue",
     TO_CHAR(v.TotalDiscountsGiven, 'FM99,990.00') AS "Total Discount",
     CASE 
-        WHEN v.CampaignRevenue >= 10000 THEN 'HIGH-IMPACT'
-        WHEN v.CampaignRevenue >= 3000  THEN 'MODERATE'
+        WHEN v.CampaignRevenue >= 10000 THEN 'HIGH-IMPACT CAMPAIGN'
+        WHEN v.CampaignRevenue >= 3000  THEN 'MODERATE PERFORMER'
         ELSE 'LOW TRACTION'
-    END AS "Health Tier"
+    END AS "Performance Category"
 FROM v_promotion_sales_performance v
 ORDER BY v.CampaignRevenue DESC;
 
-PROMPT
-PROMPT ----------------------------------------------------------------------------------------
-PROMPT CAMPAIGN REVENUE and DISCOUNT ABSORPTION TOTALS:
-PROMPT ----------------------------------------------------------------------------------------
-SELECT 
-    COUNT(*) AS "Total Campaigns",
-    SUM(TotalUnitsSold) AS "Total Promo Units Sold",
-    TO_CHAR(SUM(CampaignRevenue), 'FM$999,990.00') AS "Total Gross Promo Sales",
-    TO_CHAR(SUM(TotalDiscountsGiven), 'FM$999,990.00') AS "Total Discounts Given",
-    TO_CHAR(ROUND((SUM(TotalDiscountsGiven) / NULLIF(SUM(CampaignRevenue), 0)) * 100, 2), 'FM990.00') || '%' AS "Effective Discount Rate"
-FROM v_promotion_sales_performance;
-PROMPT
-PROMPT CONCLUSION: High-impact campaigns generate >RM10k sales at an effective discount rate of 12%, maximizing promotional profit.
-PROMPT ========================================================================================
+-- Column formatting for Query 2
+COLUMN "Promo"                FORMAT 9999       HEADING "Promo";
+COLUMN "Item"                 FORMAT 9999       HEADING "Item";
+COLUMN "Product Name"         FORMAT A24        HEADING "Product Name";
+COLUMN "Brand"                FORMAT A14        HEADING "Brand";
+COLUMN "Base Price"           FORMAT A12        HEADING "Base Price";
+COLUMN "Promo Price"          FORMAT A12        HEADING "Promo Price";
+COLUMN "Discount %"           FORMAT A12        HEADING "Discount %";
+COLUMN "Time Remaining"       FORMAT A16        HEADING "Time Remaining";
 
 PROMPT
 PROMPT ========================================================================================
 PROMPT [TASK 4 - QUERY 2] TACTICAL: DEEPEST DISCOUNT DEALS AND MARKDOWN MARGIN ANALYSIS
-PROMPT Purpose: Ranks top promotional markdowns by item and monitors active discount duration.
 PROMPT ========================================================================================
 SELECT 
     apc.PromotionID AS "Promo",
     apc.ItemID AS "Item",
-    SUBSTR(apc.ItemName, 1, 18) AS "Product Description",
-    SUBSTR(NVL(apc.Brand, 'FreshMart'), 1, 12) AS "Brand",
+    apc.ItemName AS "Product Name",
+    NVL(apc.Brand, 'FreshMart') AS "Brand",
     TO_CHAR(apc.OriginalPrice, 'FM990.00') AS "Base Price",
     TO_CHAR(apc.DiscountedPrice, 'FM990.00') AS "Promo Price",
     TO_CHAR(apc.EffectiveDiscountPercent, 'FM90.0') || '%' AS "Discount %",
     CASE 
         WHEN apc.DaysRemaining <= 0 THEN 'ENDING TODAY'
         ELSE apc.DaysRemaining || ' Days Left'
-    END AS "Promo Status"
+    END AS "Time Remaining"
 FROM v_active_promotions_catalog apc
 ORDER BY apc.EffectiveDiscountPercent DESC;
-
-PROMPT
-PROMPT ----------------------------------------------------------------------------------------
-PROMPT ACTIVE PROMOTIONAL MARKDOWN SUMMARY:
-PROMPT ----------------------------------------------------------------------------------------
-SELECT 
-    COUNT(*) AS "Active Promoted SKUs",
-    TO_CHAR(AVG(OriginalPrice), 'FM$990.00') AS "Avg Base Price",
-    TO_CHAR(AVG(DiscountedPrice), 'FM$990.00') AS "Avg Promo Price",
-    TO_CHAR(AVG(EffectiveDiscountPercent), 'FM990.0') || '%' AS "Avg Margin Cut",
-    TO_CHAR(MAX(EffectiveDiscountPercent), 'FM990.0') || '%' AS "Max Discount Offered"
-FROM v_active_promotions_catalog;
-PROMPT
-PROMPT CONCLUSION: Average margin cut of 35% drives consumer volume while remaining strictly below supplier cost thresholds.
-PROMPT ========================================================================================
 
 
 -- TASK 5: STORED PROCEDURES WITH EXCEPTION HANDLING (2 PROCEDURES)

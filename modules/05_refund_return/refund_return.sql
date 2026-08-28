@@ -88,107 +88,72 @@ GROUP BY i.ItemID, i.ItemName, i.Brand, i.Price;
 
 -- -----------------------------------------------------------------------------
 -- -----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL and OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
 
--- -----------------------------------------------------------------------------
--- SQL*PLUS TERMINAL and COLUMN FORMATTING (COMPACT HALF-SCREEN ALIGNMENT)
--- -----------------------------------------------------------------------------
-SET LINESIZE 120;
+SET LINESIZE 200;
 SET PAGESIZE 100;
-SET FEEDBACK OFF;
+SET FEEDBACK ON;
 SET RECSEP OFF;
 SET DEFINE OFF;
 
--- Formatting for Query 1
-COLUMN "Item"               FORMAT 9999       HEADING "Item";
-COLUMN "Product Name"       FORMAT A18        HEADING "Product Name";
-COLUMN "Brand"              FORMAT A12        HEADING "Brand";
+-- Column formatting for Query 1
+COLUMN "Item #"             FORMAT 9999       HEADING "Item";
+COLUMN "Product Name"       FORMAT A24        HEADING "Product Name";
+COLUMN "Brand"              FORMAT A14        HEADING "Brand";
 COLUMN "Damage"             FORMAT 9999       HEADING "Dam";
 COLUMN "Defect"             FORMAT 9999       HEADING "Def";
 COLUMN "Expired"            FORMAT 9999       HEADING "Exp";
 COLUMN "Total Flaws"        FORMAT 9999       HEADING "Total";
-COLUMN "Total Loss (MYR)"   FORMAT A14        HEADING "Loss (MYR)";
-COLUMN "Action Plan"        FORMAT A20        HEADING "Action Plan";
-
--- Formatting for Query 1 Summary
-COLUMN "Defective Product Lines" FORMAT 999999 HEADING "Defective SKUs";
-COLUMN "Total Damaged"      FORMAT 999999     HEADING "Total Damaged";
-COLUMN "Total Defective"    FORMAT 999999     HEADING "Total Defect";
-COLUMN "Total Expired"      FORMAT 999999     HEADING "Total Expired";
-COLUMN "Total Quality Loss" FORMAT A16        HEADING "Total Quality Loss";
-
--- Formatting for Query 2
-COLUMN "Branch"             FORMAT 9999       HEADING "Br";
-COLUMN "Branch Name"        FORMAT A18        HEADING "Retail Branch";
-COLUMN "Total Claims"       FORMAT 99999      HEADING "Claims";
-COLUMN "Approved"           FORMAT 99999      HEADING "Appr";
-COLUMN "Rejected"           FORMAT 99999      HEADING "Rej";
-COLUMN "Pending"            FORMAT 99999      HEADING "Pend";
-COLUMN "Total Payout (MYR)" FORMAT A14        HEADING "Payout (MYR)";
-COLUMN "Approval %"         FORMAT A12        HEADING "Appr Rate";
-
--- Formatting for Query 2 Summary
-COLUMN "Total Claims Filed" FORMAT 999999     HEADING "Total Claims";
-COLUMN "Approved Claims"    FORMAT 999999     HEADING "Approved";
-COLUMN "Rejected Claims"    FORMAT 999999     HEADING "Rejected";
-COLUMN "Total Customer Payout" FORMAT A16     HEADING "Total Payout";
-COLUMN "Network Approval Rate" FORMAT A14     HEADING "Network Appr %";
-
+COLUMN "Total Loss (MYR)"   FORMAT A16        HEADING "Total Loss (MYR)";
+COLUMN "Action Plan"        FORMAT A22        HEADING "Action Plan";
 
 PROMPT
 PROMPT ========================================================================================
 PROMPT [TASK 4 - QUERY 1] STRATEGIC: QUALITY CONTROL AND PRODUCT DEFECT LOSS RANKING
-PROMPT Purpose: Ranks items by defect volume and financial loss to enforce supplier quality.
 PROMPT ========================================================================================
 SELECT 
-    v.ItemID AS "Item",
-    SUBSTR(v.ItemName, 1, 18) AS "Product Name",
-    SUBSTR(NVL(v.Brand, 'Generic'), 1, 12) AS "Brand",
+    v.ItemID AS "Item #",
+    v.ItemName AS "Product Name",
+    NVL(v.Brand, 'Generic') AS "Brand",
     v.DamagedUnits AS "Damage",
     v.DefectiveUnits AS "Defect",
     v.ExpiredUnits AS "Expired",
     v.TotalFlawedUnits AS "Total Flaws",
     TO_CHAR(v.EstimatedLossMYR, 'FM99,990.00') AS "Total Loss (MYR)",
     CASE 
-        WHEN v.EstimatedLossMYR >= 300 THEN 'VENDOR AUDIT'
-        WHEN v.EstimatedLossMYR >= 100 THEN 'BATCH INSPECT'
+        WHEN v.EstimatedLossMYR >= 300 THEN 'VENDOR QUALITY AUDIT'
+        WHEN v.EstimatedLossMYR >= 100 THEN 'BATCH INSPECTION'
         ELSE 'ROUTINE MONITOR'
     END AS "Action Plan"
 FROM v_defect_product_loss v
 ORDER BY v.EstimatedLossMYR DESC, v.TotalFlawedUnits DESC;
 
-PROMPT
-PROMPT ----------------------------------------------------------------------------------------
-PROMPT QUALITY DEFECT and FINANCIAL LOSS TOTALS:
-PROMPT ----------------------------------------------------------------------------------------
-SELECT 
-    COUNT(*) AS "Defective Product Lines",
-    SUM(DamagedUnits) AS "Total Damaged",
-    SUM(DefectiveUnits) AS "Total Defective",
-    SUM(ExpiredUnits) AS "Total Expired",
-    SUM(TotalFlawedUnits) AS "Total Flaws",
-    TO_CHAR(SUM(EstimatedLossMYR), 'FM$999,990.00') AS "Total Quality Loss"
-FROM v_defect_product_loss;
-PROMPT
-PROMPT CONCLUSION: Products requiring Vendor Quality Audits account for 65% of loss. Issue supplier chargebacks per Rule 32.
-PROMPT ========================================================================================
+-- Column formatting for Query 2
+COLUMN "Branch #"           FORMAT 9999       HEADING "Branch";
+COLUMN "Branch Name"        FORMAT A22        HEADING "Retail Branch";
+COLUMN "Total Claims"       FORMAT 99999      HEADING "Claims";
+COLUMN "Approved"           FORMAT 99999      HEADING "Appr";
+COLUMN "Rejected"           FORMAT 99999      HEADING "Rej";
+COLUMN "Pending"            FORMAT 99999      HEADING "Pend";
+COLUMN "Total Payout (MYR)" FORMAT A16        HEADING "Total Payout";
+COLUMN "Approval %"         FORMAT A12        HEADING "Appr Rate";
 
 PROMPT
 PROMPT ========================================================================================
 PROMPT [TASK 4 - QUERY 2] TACTICAL: RETAIL BRANCH REFUND FREQUENCY AND RISK ANALYSIS
-PROMPT Purpose: Evaluates claim adjudication rates, dispute volumes, and financial payout per store.
 PROMPT ========================================================================================
 SELECT 
-    b.BranchID AS "Branch",
-    SUBSTR(b.BranchName, 1, 18) AS "Branch Name",
+    b.BranchID AS "Branch #",
+    b.BranchName AS "Branch Name",
     COUNT(DISTINCT r.RefundID) AS "Total Claims",
     COUNT(DISTINCT CASE WHEN r.RefundStatus = 'Approved' THEN r.RefundID END) AS "Approved",
     COUNT(DISTINCT CASE WHEN r.RefundStatus = 'Rejected' THEN r.RefundID END) AS "Rejected",
     COUNT(DISTINCT CASE WHEN r.RefundStatus = 'Pending'  THEN r.RefundID END) AS "Pending",
     TO_CHAR(NVL(SUM(CASE WHEN r.RefundStatus = 'Approved' THEN r.RefundAmount ELSE 0 END), 0), 'FM99,990.00') AS "Total Payout (MYR)",
     CASE 
-        WHEN COUNT(DISTINCT r.RefundID) = 0 THEN '0%'
+        WHEN COUNT(DISTINCT r.RefundID) = 0 THEN '0.00%'
         ELSE TO_CHAR(ROUND((COUNT(DISTINCT CASE WHEN r.RefundStatus = 'Approved' THEN r.RefundID END) / COUNT(DISTINCT r.RefundID)) * 100, 2), 'FM990.00') || '%'
     END AS "Approval %"
 FROM Branch b
@@ -196,22 +161,6 @@ LEFT JOIN CustomerOrder o ON b.BranchID = o.BranchID
 LEFT JOIN Refund r ON o.OrderID = r.OrderID
 GROUP BY b.BranchID, b.BranchName
 ORDER BY COUNT(DISTINCT r.RefundID) DESC, SUM(r.RefundAmount) DESC NULLS LAST;
-
-PROMPT
-PROMPT ----------------------------------------------------------------------------------------
-PROMPT NETWORK REFUND ADJUDICATION and PAYOUT TOTALS:
-PROMPT ----------------------------------------------------------------------------------------
-SELECT 
-    COUNT(DISTINCT r.RefundID) AS "Total Claims Filed",
-    COUNT(DISTINCT CASE WHEN r.RefundStatus = 'Approved' THEN r.RefundID END) AS "Approved Claims",
-    COUNT(DISTINCT CASE WHEN r.RefundStatus = 'Rejected' THEN r.RefundID END) AS "Rejected Claims",
-    COUNT(DISTINCT CASE WHEN r.RefundStatus = 'Pending' THEN r.RefundID END) AS "Pending",
-    TO_CHAR(SUM(CASE WHEN r.RefundStatus = 'Approved' THEN r.RefundAmount ELSE 0 END), 'FM$999,990.00') AS "Total Customer Payout",
-    TO_CHAR(ROUND((COUNT(DISTINCT CASE WHEN r.RefundStatus = 'Approved' THEN r.RefundID END) / NULLIF(COUNT(DISTINCT r.RefundID), 0)) * 100, 2), 'FM990.00') || '%' AS "Network Approval Rate"
-FROM Refund r;
-PROMPT
-PROMPT CONCLUSION: Network approval rate of 37% reflects strict 7-day policy enforcement (Rule 31) and condition verification.
-PROMPT ========================================================================================
 
 
 -- TASK 5: STORED PROCEDURES WITH EXCEPTION HANDLING (2 PROCEDURES)

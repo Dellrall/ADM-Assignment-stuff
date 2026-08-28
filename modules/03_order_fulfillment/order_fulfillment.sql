@@ -104,57 +104,32 @@ GROUP BY ds.DeliveryServiceID, ds.CompanyName, ds.CompanyStatus, ds.DeliveryChar
 
 -- -----------------------------------------------------------------------------
 -- -----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL and OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
 
--- -----------------------------------------------------------------------------
--- SQL*PLUS TERMINAL and COLUMN FORMATTING (COMPACT HALF-SCREEN ALIGNMENT)
--- -----------------------------------------------------------------------------
-SET LINESIZE 120;
+SET LINESIZE 200;
 SET PAGESIZE 100;
-SET FEEDBACK OFF;
+SET FEEDBACK ON;
 SET RECSEP OFF;
 SET DEFINE OFF;
 
--- Formatting for Query 1
-COLUMN BranchID             FORMAT 9999       HEADING "Br";
-COLUMN "Branch Location"    FORMAT A18        HEADING "Branch Location";
+-- Column formatting for Query 1
+COLUMN BranchID             FORMAT 9999       HEADING "Branch";
+COLUMN "Branch Location"    FORMAT A22        HEADING "Branch Location";
 COLUMN "Total Orders"       FORMAT 99999      HEADING "Orders";
 COLUMN "Delivery Orders"    FORMAT 99999      HEADING "Delivery";
 COLUMN "Pickup Orders"      FORMAT 99999      HEADING "Pickup";
-COLUMN "Net Sales Revenue"  FORMAT A14        HEADING "Net Revenue";
-COLUMN "Avg Line Value"     FORMAT A12        HEADING "Avg Line";
-
--- Formatting for Query 1 Summary
-COLUMN "Network Orders"     FORMAT 999999     HEADING "Total Orders";
-COLUMN "Delivery Share"     FORMAT A14        HEADING "Delivery Share";
-COLUMN "Pickup Share"       FORMAT A14        HEADING "Pickup Share";
-COLUMN "Total Omnichannel Revenue" FORMAT A16 HEADING "Total Net Rev";
-
--- Formatting for Query 2
-COLUMN "Courier ID"         FORMAT 9999       HEADING "ID";
-COLUMN "Courier Partner"    FORMAT A18        HEADING "Courier Partner";
-COLUMN "Total Handled"      FORMAT 99999      HEADING "Dispatches";
-COLUMN "Completed"          FORMAT 99999      HEADING "Delivered";
-COLUMN "In-Transit Backlog" FORMAT 99999      HEADING "Backlog";
-COLUMN "Success Rate"       FORMAT A12        HEADING "SLA Rate";
-COLUMN "Total Freight (MYR)" FORMAT A14       HEADING "Freight (MYR)";
-
--- Formatting for Query 2 Summary
-COLUMN "Active Carriers"    FORMAT 999999     HEADING "Carriers";
-COLUMN "Total Dispatches"   FORMAT 999999     HEADING "Total Parcels";
-COLUMN "Network SLA Rate"   FORMAT A14        HEADING "Network SLA";
-COLUMN "Total Freight Expense" FORMAT A16     HEADING "Total Freight";
-
+COLUMN "Net Sales Revenue"  FORMAT A16        HEADING "Net Revenue";
+COLUMN "Avg Line Value"     FORMAT A14        HEADING "Avg Line Value";
 
 PROMPT
 PROMPT ========================================================================================
 PROMPT [TASK 4 - QUERY 1] STRATEGIC: OMNICHANNEL SALES DISTRIBUTION AND FULFILLMENT REVENUE
-PROMPT Purpose: Compares in-store pickup vs courier delivery revenue split across retail branches.
 PROMPT ========================================================================================
 SELECT 
     b.BranchID,
-    SUBSTR(b.BranchName, 1, 18) AS "Branch Location",
+    b.BranchName AS "Branch Location",
     COUNT(DISTINCT o.OrderID) AS "Total Orders",
     COUNT(DISTINCT CASE WHEN d.DeliveryID IS NOT NULL THEN o.OrderID END) AS "Delivery Orders",
     COUNT(DISTINCT CASE WHEN pk.PickupID IS NOT NULL THEN o.OrderID END) AS "Pickup Orders",
@@ -168,35 +143,24 @@ LEFT JOIN OrderDetail od ON o.OrderID = od.OrderID
 GROUP BY b.BranchID, b.BranchName
 ORDER BY SUM(od.Quantity * (od.UnitPrice - od.Discount)) DESC NULLS LAST;
 
-PROMPT
-PROMPT ----------------------------------------------------------------------------------------
-PROMPT NETWORK FULFILLMENT CHANNEL TOTALS:
-PROMPT ----------------------------------------------------------------------------------------
-SELECT 
-    COUNT(DISTINCT o.OrderID) AS "Network Orders",
-    COUNT(DISTINCT d.OrderID) AS "Delivery Orders",
-    COUNT(DISTINCT pk.OrderID) AS "Pickup Orders",
-    TO_CHAR(ROUND((COUNT(DISTINCT d.OrderID) / NULLIF(COUNT(DISTINCT o.OrderID),0))*100, 1), 'FM990.0') || '%' AS "Delivery Share",
-    TO_CHAR(ROUND((COUNT(DISTINCT pk.OrderID) / NULLIF(COUNT(DISTINCT o.OrderID),0))*100, 1), 'FM990.0') || '%' AS "Pickup Share",
-    TO_CHAR(SUM(od.Quantity * (od.UnitPrice - od.Discount)), 'FM$999,990.00') AS "Total Omnichannel Revenue"
-FROM CustomerOrder o
-LEFT JOIN Delivery d ON o.OrderID = d.OrderID
-LEFT JOIN Pickup pk ON o.OrderID = pk.OrderID
-JOIN OrderDetail od ON o.OrderID = od.OrderID;
-PROMPT
-PROMPT CONCLUSION: Delivery accounts for 58% of orders, while in-store pickup drives higher average basket sizes in urban branches.
-PROMPT ========================================================================================
+-- Column formatting for Query 2
+COLUMN "Courier ID"         FORMAT 9999       HEADING "ID";
+COLUMN "Courier Partner"    FORMAT A22        HEADING "Courier Partner";
+COLUMN "Total Dispatches"   FORMAT 99999      HEADING "Dispatches";
+COLUMN "Delivered"          FORMAT 99999      HEADING "Delivered";
+COLUMN "In-Transit Backlog" FORMAT 99999      HEADING "Backlog";
+COLUMN "Success Rate"       FORMAT A12        HEADING "SLA Rate";
+COLUMN "Total Freight (MYR)" FORMAT A16       HEADING "Total Freight";
 
 PROMPT
 PROMPT ========================================================================================
 PROMPT [TASK 4 - QUERY 2] TACTICAL: COURIER PARTNER SLA AND DELIVERY SUCCESS RATE ANALYSIS
-PROMPT Purpose: Audits third-party delivery services for transit reliability and freight cost.
 PROMPT ========================================================================================
 SELECT 
     ds.DeliveryServiceID AS "Courier ID",
-    SUBSTR(ds.CompanyName, 1, 18) AS "Courier Partner",
-    ds.TotalDispatches AS "Total Handled",
-    ds.CompletedDeliveries AS "Completed",
+    ds.CompanyName AS "Courier Partner",
+    ds.TotalDispatches AS "Total Dispatches",
+    ds.CompletedDeliveries AS "Delivered",
     ds.InTransitDeliveries AS "In-Transit Backlog",
     CASE 
         WHEN ds.TotalDispatches = 0 THEN 'N/A'
@@ -205,22 +169,6 @@ SELECT
     TO_CHAR(ds.TotalFreightRevenue, 'FM99,990.00') AS "Total Freight (MYR)"
 FROM v_courier_performance ds
 ORDER BY ds.TotalDispatches DESC, ds.TotalFreightRevenue DESC;
-
-PROMPT
-PROMPT ----------------------------------------------------------------------------------------
-PROMPT 3PL LOGISTICS NETWORK PERFORMANCE SUMMARY:
-PROMPT ----------------------------------------------------------------------------------------
-SELECT 
-    COUNT(*) AS "Active Carriers",
-    SUM(TotalDispatches) AS "Total Dispatches",
-    SUM(CompletedDeliveries) AS "Delivered",
-    SUM(InTransitDeliveries) AS "In-Transit",
-    TO_CHAR(ROUND((SUM(CompletedDeliveries) / NULLIF(SUM(TotalDispatches), 0)) * 100, 2), 'FM990.00') || '%' AS "Network SLA Rate",
-    TO_CHAR(SUM(TotalFreightRevenue), 'FM$999,990.00') AS "Total Freight Expense"
-FROM v_courier_performance;
-PROMPT
-PROMPT CONCLUSION: Carriers with SLA rates below 60% should be penalized or deprioritized in automated dispatch routing.
-PROMPT ========================================================================================
 
 
 -- TASK 5: STORED PROCEDURES WITH EXCEPTION HANDLING (2 PROCEDURES)

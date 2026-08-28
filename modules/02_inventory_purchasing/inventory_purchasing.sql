@@ -85,125 +85,76 @@ GROUP BY sup.SupplierID, sup.CompanyName, sup.SupplierStatus;
 
 -- -----------------------------------------------------------------------------
 -- -----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL and OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
 
--- -----------------------------------------------------------------------------
--- SQL*PLUS TERMINAL and COLUMN FORMATTING (COMPACT HALF-SCREEN ALIGNMENT)
--- -----------------------------------------------------------------------------
-SET LINESIZE 120;
+SET LINESIZE 200;
 SET PAGESIZE 100;
-SET FEEDBACK OFF;
+SET FEEDBACK ON;
 SET RECSEP OFF;
 SET DEFINE OFF;
 
--- Formatting for Query 1
-COLUMN BranchID                FORMAT 9999       HEADING "Br";
-COLUMN "Branch Name"           FORMAT A18        HEADING "Branch Location";
+-- Column formatting for Query 1
+COLUMN BranchID                FORMAT 9999       HEADING "Branch";
+COLUMN "Branch Location"       FORMAT A22        HEADING "Branch Location";
 COLUMN ItemID                  FORMAT 9999       HEADING "Item";
-COLUMN "Item Description"      FORMAT A18        HEADING "Product";
-COLUMN "Current Stock"         FORMAT 99999      HEADING "Stock";
-COLUMN "Reorder Threshold"     FORMAT 9999       HEADING "Min";
-COLUMN "Capacity Limit"        FORMAT 9999       HEADING "Max";
-COLUMN "Order Qty"             FORMAT 9999       HEADING "Need";
-COLUMN "Est Cost (MYR)"        FORMAT A14        HEADING "Est Cost (MYR)";
-
--- Formatting for Query 1 Summary
-COLUMN "Branches in Deficit"   FORMAT 999999     HEADING "Branches";
-COLUMN "Deficient SKU Lines"   FORMAT 999999     HEADING "SKU Lines";
-COLUMN "Total Units Needed"    FORMAT 999999     HEADING "Units Need";
-COLUMN "Total Restock Budget"  FORMAT A16        HEADING "Total Budget";
-
--- Formatting for Query 2
-COLUMN BatchID                 FORMAT 999999     HEADING "Batch";
-COLUMN "Item Name"             FORMAT A18        HEADING "Product Name";
-COLUMN "Warehouse Branch"      FORMAT A16        HEADING "Branch";
-COLUMN "Units"                 FORMAT 9999       HEADING "Qty";
-COLUMN "Received"              FORMAT A11        HEADING "Received";
-COLUMN "Expiry"                FORMAT A11        HEADING "Expiry";
-COLUMN "Days Left"             FORMAT 9999       HEADING "Days";
-COLUMN "At-Risk (MYR)"         FORMAT A12        HEADING "At-Risk(MYR)";
-
--- Formatting for Query 2 Summary
-COLUMN "Near-Expiry Batches"   FORMAT 999999     HEADING "Batches";
-COLUMN "Total Units at Risk"   FORMAT 999999     HEADING "Units Risk";
-COLUMN "Total Financial Exposure" FORMAT A16     HEADING "Total Loss Exp";
-COLUMN "Avg Shelf Life Left"   FORMAT A14        HEADING "Avg Shelf Life";
-
+COLUMN "Product Name"          FORMAT A24        HEADING "Product Name";
+COLUMN "Current Stock"         FORMAT 999999     HEADING "On-Hand";
+COLUMN "Reorder Threshold"     FORMAT 999999     HEADING "Min Stock";
+COLUMN "Capacity Limit"        FORMAT 999999     HEADING "Max Stock";
+COLUMN "Suggested Reorder Qty" FORMAT 999999     HEADING "Reorder Qty";
+COLUMN "Estimated Cost (MYR)"  FORMAT A16        HEADING "Est Cost (MYR)";
 
 PROMPT
 PROMPT ========================================================================================
 PROMPT [TASK 4 - QUERY 1] STRATEGIC: STOCK REPLENISHMENT DEFICIENCY AND REORDER FORECAST
-PROMPT Purpose: Flags critical inventory levels below threshold and calculates reorder costs.
 PROMPT ========================================================================================
 SELECT 
     b.BranchID,
-    SUBSTR(b.BranchName, 1, 18) AS "Branch Name",
+    b.BranchName AS "Branch Location",
     i.ItemID,
-    SUBSTR(i.ItemName, 1, 18) AS "Item Description",
+    i.ItemName AS "Product Name",
     s.Quantity AS "Current Stock",
     s.ReorderLevel AS "Reorder Threshold",
     s.MaximumStock AS "Capacity Limit",
-    (s.MaximumStock - s.Quantity) AS "Order Qty",
-    TO_CHAR((s.MaximumStock - s.Quantity) * i.Price, 'FM99,990.00') AS "Est Cost (MYR)"
+    (s.MaximumStock - s.Quantity) AS "Suggested Reorder Qty",
+    TO_CHAR((s.MaximumStock - s.Quantity) * i.Price, 'FM99,990.00') AS "Estimated Cost (MYR)"
 FROM Branch b
 JOIN Stock s ON b.BranchID = s.BranchID
 JOIN Item i ON s.ItemID = i.ItemID
 WHERE s.Quantity <= s.ReorderLevel
 ORDER BY b.BranchID, (s.MaximumStock - s.Quantity) DESC;
 
-PROMPT
-PROMPT ----------------------------------------------------------------------------------------
-PROMPT REORDER DEFICIENCY and BUDGET FORECAST TOTALS:
-PROMPT ----------------------------------------------------------------------------------------
-SELECT 
-    COUNT(DISTINCT s.BranchID) AS "Branches in Deficit",
-    COUNT(*) AS "Deficient SKU Lines",
-    SUM(s.MaximumStock - s.Quantity) AS "Total Units Needed",
-    TO_CHAR(SUM((s.MaximumStock - s.Quantity) * i.Price), 'FM$999,990.00') AS "Total Restock Budget"
-FROM Stock s
-JOIN Item i ON s.ItemID = i.ItemID
-WHERE s.Quantity <= s.ReorderLevel;
-PROMPT
-PROMPT CONCLUSION: Critical stock deficit across store network requires immediate purchase order generation to avoid stockout losses.
-PROMPT ========================================================================================
+-- Column formatting for Query 2
+COLUMN BatchID                 FORMAT 999999     HEADING "Batch";
+COLUMN "Item Name"             FORMAT A24        HEADING "Item Name";
+COLUMN "Warehouse Location"    FORMAT A22        HEADING "Warehouse Location";
+COLUMN "Units In Batch"        FORMAT 999999     HEADING "Units";
+COLUMN "Received Date"         FORMAT A12        HEADING "Received";
+COLUMN "Expiry Date"           FORMAT A12        HEADING "Expiry";
+COLUMN "Days Left"             FORMAT 9999       HEADING "Days Left";
+COLUMN "At-Risk Value (MYR)"   FORMAT A16        HEADING "At-Risk (MYR)";
 
 PROMPT
 PROMPT ========================================================================================
 PROMPT [TASK 4 - QUERY 2] TACTICAL: NEAR-EXPIRY BATCH RISK AND SPOILAGE EXPOSURE
-PROMPT Purpose: Audits batches expiring within 90 days to minimize warehouse spoilage losses.
 PROMPT ========================================================================================
 SELECT 
     sb.BatchID,
-    SUBSTR(i.ItemName, 1, 18) AS "Item Name",
-    SUBSTR(b.BranchName, 1, 16) AS "Warehouse Branch",
-    sb.Quantity AS "Units",
-    TO_CHAR(sb.ReceivedDate, 'YYYY-MM-DD') AS "Received",
-    TO_CHAR(sb.ExpiryDate, 'YYYY-MM-DD') AS "Expiry",
+    i.ItemName AS "Item Name",
+    b.BranchName AS "Warehouse Location",
+    sb.Quantity AS "Units In Batch",
+    TO_CHAR(sb.ReceivedDate, 'YYYY-MM-DD') AS "Received Date",
+    TO_CHAR(sb.ExpiryDate, 'YYYY-MM-DD') AS "Expiry Date",
     ROUND(sb.ExpiryDate - SYSDATE) AS "Days Left",
-    TO_CHAR(sb.Quantity * i.Price, 'FM99,990.00') AS "At-Risk (MYR)"
+    TO_CHAR(sb.Quantity * i.Price, 'FM99,990.00') AS "At-Risk Value (MYR)"
 FROM StockBatch sb
 JOIN Item i ON sb.ItemID = i.ItemID
 JOIN Branch b ON sb.BranchID = b.BranchID
 WHERE sb.ExpiryDate IS NOT NULL 
   AND sb.ExpiryDate <= SYSDATE + 90
 ORDER BY sb.ExpiryDate ASC;
-
-PROMPT
-PROMPT ----------------------------------------------------------------------------------------
-PROMPT AT-RISK INVENTORY (<90 DAYS) FINANCIAL EXPOSURE:
-PROMPT ----------------------------------------------------------------------------------------
-SELECT 
-    COUNT(*) AS "Near-Expiry Batches",
-    SUM(sb.Quantity) AS "Total Units at Risk",
-    TO_CHAR(SUM(sb.Quantity * i.Price), 'FM$999,990.00') AS "Total Financial Exposure",
-    TO_CHAR(AVG(ROUND(sb.ExpiryDate - SYSDATE)), 'FM990.0') || ' Days' AS "Avg Shelf Life Left"
-FROM StockBatch sb
-JOIN Item i ON sb.ItemID = i.ItemID
-WHERE sb.ExpiryDate IS NOT NULL AND sb.ExpiryDate <= SYSDATE + 90;
-PROMPT
-PROMPT CONCLUSION: Trigger Module 4 markdown discounts for batches under 30 days remaining to accelerate sell-through.
-PROMPT ========================================================================================
 
 
 -- TASK 5: STORED PROCEDURES WITH EXCEPTION HANDLING (2 PROCEDURES)
