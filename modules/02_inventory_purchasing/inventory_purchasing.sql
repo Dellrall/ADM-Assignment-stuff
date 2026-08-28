@@ -1,18 +1,19 @@
 -- =============================================================================
--- MODULE 2: INVENTORY & PURCHASING MANAGEMENT
+-- MODULE 2: INVENTORY and PURCHASING MANAGEMENT
 -- BMCS3183 Advanced Database Management | 88 Speedmart System
 -- =============================================================================
 
 SET LINESIZE 200;
 SET PAGESIZE 50;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
+SET DEFINE OFF;
 
 -- -----------------------------------------------------------------------------
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES, VIEWS, CUSTOM EXCEPTIONS)
 -- -----------------------------------------------------------------------------
 
 
--- Drop existing sequences & indexes for clean re-execution
+-- Drop existing sequences and indexes for clean re-execution
 BEGIN
     EXECUTE IMMEDIATE 'DROP SEQUENCE seq_po_id';
 EXCEPTION WHEN OTHERS THEN NULL;
@@ -51,7 +52,7 @@ CREATE SEQUENCE seq_stock_log_id
 CREATE INDEX idx_stock_branch_reorder ON Stock (BranchID, Quantity, ReorderLevel);
 CREATE INDEX idx_batch_item_expiry ON StockBatch (ItemID, ExpiryDate, BranchID);
 
--- 3. View 1: Branch Inventory Health & Valuation (Strategic View)
+-- 3. View 1: Branch Inventory Health and Valuation (Strategic View)
 CREATE OR REPLACE VIEW v_branch_inventory_health AS
 SELECT 
     b.BranchID,
@@ -67,7 +68,7 @@ JOIN Stock s ON b.BranchID = s.BranchID
 JOIN Item i ON s.ItemID = i.ItemID
 GROUP BY b.BranchID, b.BranchName, b.State;
 
--- 4. View 2: Supplier Procurement & Fulfillment Performance (Tactical View)
+-- 4. View 2: Supplier Procurement and Fulfillment Performance (Tactical View)
 CREATE OR REPLACE VIEW v_supplier_procurement_summary AS
 SELECT 
     sup.SupplierID,
@@ -83,32 +84,43 @@ LEFT JOIN PurchaseOrderItem poi ON po.PurchaseOrderID = poi.PurchaseOrderID
 GROUP BY sup.SupplierID, sup.CompanyName, sup.SupplierStatus;
 
 -- -----------------------------------------------------------------------------
--- TASK 4: ANALYTICAL & OPERATIONAL QUERIES (2 QUERIES)
+-- TASK 4: ANALYTICAL and OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
 
--- Column formatting for SQL*Plus display
-COLUMN BranchID FORMAT 9999 HEADING "Branch";
-COLUMN "Branch Name" FORMAT A22;
-COLUMN ItemID FORMAT 9999 HEADING "Item";
-COLUMN "Item Description" FORMAT A22;
-COLUMN "Current Stock" FORMAT 999999;
-COLUMN "Reorder Threshold" FORMAT 999999;
-COLUMN "Capacity Limit" FORMAT 999999;
-COLUMN "Suggested Reorder Qty" FORMAT 999999;
-COLUMN "Estimated Cost (MYR)" FORMAT A20;
+-- -----------------------------------------------------------------------------
+-- SQL*PLUS TERMINAL & COLUMN FORMATTING
+-- -----------------------------------------------------------------------------
+SET LINESIZE 220;
+SET PAGESIZE 100;
+SET FEEDBACK ON;
 
-COLUMN BatchID FORMAT 999999 HEADING "Batch";
-COLUMN "Item Name" FORMAT A22;
-COLUMN "Warehouse Branch" FORMAT A20;
-COLUMN "Units In Batch" FORMAT 999999;
-COLUMN "Received Date" FORMAT A13;
-COLUMN "Expiry Date" FORMAT A13;
-COLUMN "Days Remaining" FORMAT 999999;
-COLUMN "At-Risk Value (MYR)" FORMAT A18;
+-- Column formatting for Query 1
+COLUMN BranchID                FORMAT 9999      HEADING "Branch";
+COLUMN "Branch Name"           FORMAT A24       HEADING "Branch Location";
+COLUMN ItemID                  FORMAT 9999      HEADING "Item";
+COLUMN "Item Description"      FORMAT A24       HEADING "Product Description";
+COLUMN "Current Stock"         FORMAT 999999    HEADING "On-Hand";
+COLUMN "Reorder Threshold"     FORMAT 999999    HEADING "Min Level";
+COLUMN "Capacity Limit"        FORMAT 999999    HEADING "Max Cap";
+COLUMN "Suggested Reorder Qty" FORMAT 999999    HEADING "Order Qty";
+COLUMN "Estimated Cost (MYR)"  FORMAT A18       HEADING "Est Cost (MYR)";
+
+-- Column formatting for Query 2
+COLUMN BatchID                 FORMAT 999999    HEADING "Batch";
+COLUMN "Item Name"             FORMAT A24       HEADING "Item Name";
+COLUMN "Warehouse Branch"      FORMAT A22       HEADING "Warehouse Location";
+COLUMN "Units In Batch"        FORMAT 999999    HEADING "Units";
+COLUMN "Received Date"         FORMAT A12       HEADING "Received";
+COLUMN "Expiry Date"           FORMAT A12       HEADING "Expiry";
+COLUMN "Days Remaining"        FORMAT 999999    HEADING "Days Left";
+COLUMN "At-Risk Value (MYR)"   FORMAT A18       HEADING "At-Risk (MYR)";
 
 
--- Query 1 (Strategic): Stock Replenishment Deficiency & Reorder Forecast
--- Discovers items across branches falling below reorder threshold and calculates capital required.
+PROMPT
+PROMPT ========================================================================================
+PROMPT [TASK 4 - QUERY 1] STRATEGIC: STOCK REPLENISHMENT DEFICIENCY AND REORDER FORECAST
+PROMPT Purpose: Flags critical inventory levels below threshold and calculates reorder costs.
+PROMPT ========================================================================================
 SELECT 
     b.BranchID,
     RPAD(b.BranchName, 24) AS "Branch Name",
@@ -125,8 +137,11 @@ JOIN Item i ON s.ItemID = i.ItemID
 WHERE s.Quantity <= s.ReorderLevel
 ORDER BY b.BranchID, (s.MaximumStock - s.Quantity) DESC;
 
--- Query 2 (Tactical): Expiring Batch Spoilage Risk Analysis (< 90 Days)
--- Flags batches nearing expiry dates to initiate markdowns or returns.
+PROMPT
+PROMPT ========================================================================================
+PROMPT [TASK 4 - QUERY 2] TACTICAL: NEAR-EXPIRY BATCH RISK AND SPOILAGE EXPOSURE
+PROMPT Purpose: Audits batches expiring within 90 days to minimize warehouse spoilage losses.
+PROMPT ========================================================================================
 SELECT 
     sb.BatchID,
     RPAD(i.ItemName, 25) AS "Item Name",
@@ -147,7 +162,7 @@ ORDER BY sb.ExpiryDate ASC;
 -- TASK 5: STORED PROCEDURES WITH EXCEPTION HANDLING (2 PROCEDURES)
 -- -----------------------------------------------------------------------------
 
--- Procedure 1: Mark Purchase Order as Received & Sync Branch Inventory
+-- Procedure 1: Mark Purchase Order as Received and Sync Branch Inventory
 -- Updates PO status, increments Stock and StockBatch, and records audit entry.
 CREATE OR REPLACE PROCEDURE sp_receive_purchase_order (
     p_po_id        IN PurchaseOrder.PurchaseOrderID%TYPE,
@@ -374,7 +389,7 @@ END trg_guard_maximum_stock_capacity;
 -- TASK 7: REPORTS GENERATION WITH NESTED CURSORS (2 REPORTS)
 -- -----------------------------------------------------------------------------
 
--- Report 1: Comprehensive Branch Inventory & Stock Audit Report (Nested Cursor)
+-- Report 1: Comprehensive Branch Inventory and Stock Audit Report (Nested Cursor)
 CREATE OR REPLACE PROCEDURE rpt_branch_inventory_audit (
     p_branch_id IN Branch.BranchID%TYPE
 ) AS
@@ -384,7 +399,7 @@ CREATE OR REPLACE PROCEDURE rpt_branch_inventory_audit (
         FROM Branch
         WHERE BranchID = p_branch_id;
 
-    -- Nested Child Cursor 1: Current Stock & Reorder Status
+    -- Nested Child Cursor 1: Current Stock and Reorder Status
     CURSOR c_stock (cp_branch_id NUMBER) IS
         SELECT s.ItemID, i.ItemName, i.Brand, s.Quantity, s.ReorderLevel, s.MaximumStock, s.ShelfLocation, i.Price
         FROM Stock s
@@ -450,7 +465,7 @@ BEGIN
     END LOOP;
 
     DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------');
-    DBMS_OUTPUT.PUT_LINE('RECENT STOCK ADJUSTMENTS & WRITE-OFFS:');
+    DBMS_OUTPUT.PUT_LINE('RECENT STOCK ADJUSTMENTS AND WRITE-OFFS:');
     DBMS_OUTPUT.PUT_LINE(RPAD('Log ID', 9) || RPAD('Date', 12) || RPAD('Item Name', 22) || RPAD('Type', 20) || LPAD('Qty', 8) || '  ' || RPAD('Staff', 16));
     DBMS_OUTPUT.PUT_LINE('----------------------------------------------------------------------------------------');
 
@@ -471,7 +486,7 @@ BEGIN
 END rpt_branch_inventory_audit;
 /
 
--- Report 2: Supplier Procurement & Purchase Order Line Summary (Nested Cursor)
+-- Report 2: Supplier Procurement and Purchase Order Line Summary (Nested Cursor)
 CREATE OR REPLACE PROCEDURE rpt_supplier_procurement_audit (
     p_supplier_id IN Supplier.SupplierID%TYPE
 ) AS

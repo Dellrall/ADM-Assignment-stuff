@@ -1,18 +1,19 @@
 -- =============================================================================
--- MODULE 4: PROMOTION & MARKETING MANAGEMENT
+-- MODULE 4: PROMOTION and MARKETING MANAGEMENT
 -- BMCS3183 Advanced Database Management | 88 Speedmart System
 -- =============================================================================
 
 SET LINESIZE 200;
 SET PAGESIZE 50;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
+SET DEFINE OFF;
 
 -- -----------------------------------------------------------------------------
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES, VIEWS, CUSTOM EXCEPTIONS)
 -- -----------------------------------------------------------------------------
 
 
--- Drop existing sequences & indexes for clean re-execution
+-- Drop existing sequences and indexes for clean re-execution
 BEGIN
     EXECUTE IMMEDIATE 'DROP SEQUENCE seq_promo_id';
 EXCEPTION WHEN OTHERS THEN NULL;
@@ -59,7 +60,7 @@ JOIN PromotionItem pi ON p.PromotionID = pi.PromotionID
 JOIN Item i ON pi.ItemID = i.ItemID
 WHERE SYSDATE BETWEEN p.StartDate AND p.EndDate;
 
--- 4. View 2: Promotion Campaign Sales & Uplift (Tactical View)
+-- 4. View 2: Promotion Campaign Sales and Uplift (Tactical View)
 CREATE OR REPLACE VIEW v_promotion_sales_performance AS
 SELECT 
     p.PromotionID,
@@ -79,31 +80,42 @@ LEFT JOIN CustomerOrder co ON od.OrderID = co.OrderID
 GROUP BY p.PromotionID, p.DiscountAmount, p.StartDate, p.EndDate;
 
 -- -----------------------------------------------------------------------------
--- TASK 4: ANALYTICAL & OPERATIONAL QUERIES (2 QUERIES)
+-- TASK 4: ANALYTICAL and OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
 
--- Column formatting for SQL*Plus display
-COLUMN "Campaign ID" FORMAT 9999;
-COLUMN "Start Date" FORMAT A12;
-COLUMN "End Date" FORMAT A12;
-COLUMN "Items Included" FORMAT 99999;
-COLUMN "Units Sold" FORMAT 99999;
-COLUMN "Gross Sales" FORMAT A16;
-COLUMN "Discounts Given" FORMAT A16;
-COLUMN "Performance Category" FORMAT A24;
+-- -----------------------------------------------------------------------------
+-- SQL*PLUS TERMINAL & COLUMN FORMATTING
+-- -----------------------------------------------------------------------------
+SET LINESIZE 220;
+SET PAGESIZE 100;
+SET FEEDBACK ON;
 
-COLUMN "Promo #" FORMAT 9999;
-COLUMN "Item #" FORMAT 9999;
-COLUMN "Item Name" FORMAT A22;
-COLUMN "Brand" FORMAT A14;
-COLUMN "Base Price" FORMAT A12;
-COLUMN "Promo Price" FORMAT A12;
-COLUMN "Margin Cut" FORMAT A12;
-COLUMN "Time Remaining" FORMAT A16;
+-- Column formatting for Query 1
+COLUMN "Campaign ID"          FORMAT 9999      HEADING "Promo ID";
+COLUMN "Start Date"           FORMAT A11       HEADING "Start Date";
+COLUMN "End Date"             FORMAT A11       HEADING "End Date";
+COLUMN "Items Included"       FORMAT 99999     HEADING "Items";
+COLUMN "Units Sold"           FORMAT 99999     HEADING "Units Sold";
+COLUMN "Gross Sales"          FORMAT A15       HEADING "Gross Revenue";
+COLUMN "Discounts Given"      FORMAT A15       HEADING "Total Discount";
+COLUMN "Performance Category" FORMAT A24       HEADING "Campaign Health Tier";
+
+-- Column formatting for Query 2
+COLUMN "Promo #"              FORMAT 9999      HEADING "Promo";
+COLUMN "Item #"               FORMAT 9999      HEADING "Item";
+COLUMN "Item Name"            FORMAT A24       HEADING "Product Description";
+COLUMN "Brand"                FORMAT A14       HEADING "Brand";
+COLUMN "Base Price"           FORMAT A12       HEADING "Base Price";
+COLUMN "Promo Price"          FORMAT A12       HEADING "Promo Price";
+COLUMN "Margin Cut"           FORMAT A12       HEADING "Discount %";
+COLUMN "Time Remaining"       FORMAT A16       HEADING "Promo Status";
 
 
--- Query 1 (Strategic): Promotion Campaign Revenue & Discount Absorption Analysis
--- Analyzes campaign efficiency and margin impact across all promotional campaigns.
+PROMPT
+PROMPT ========================================================================================
+PROMPT [TASK 4 - QUERY 1] STRATEGIC: PROMOTION CAMPAIGN REVENUE AND DISCOUNT ABSORPTION
+PROMPT Purpose: Evaluates campaign profitability, unit velocity, and gross revenue generated.
+PROMPT ========================================================================================
 SELECT 
     v.PromotionID AS "Campaign ID",
     TO_CHAR(v.StartDate, 'YYYY-MM-DD') AS "Start Date",
@@ -120,8 +132,11 @@ SELECT
 FROM v_promotion_sales_performance v
 ORDER BY v.CampaignRevenue DESC;
 
--- Query 2 (Tactical): Deepest Discount Deals & Markdown Margin Analysis
--- Evaluates discount percentages on active items to identify key promotional drivers.
+PROMPT
+PROMPT ========================================================================================
+PROMPT [TASK 4 - QUERY 2] TACTICAL: DEEPEST DISCOUNT DEALS AND MARKDOWN MARGIN ANALYSIS
+PROMPT Purpose: Ranks top promotional markdowns by item and monitors active discount duration.
+PROMPT ========================================================================================
 SELECT 
     apc.PromotionID AS "Promo #",
     apc.ItemID AS "Item #",
@@ -316,7 +331,7 @@ END trg_guard_promo_item_discount;
 -- TASK 7: REPORTS GENERATION WITH NESTED CURSORS (2 REPORTS)
 -- -----------------------------------------------------------------------------
 
--- Report 1: Active Promotional Campaigns & Product Markdown Catalog (Nested Cursor)
+-- Report 1: Active Promotional Campaigns and Product Markdown Catalog (Nested Cursor)
 CREATE OR REPLACE PROCEDURE rpt_active_promotions_catalog AS
     -- Parent Cursor: Active Promotions
     CURSOR c_promos IS
@@ -367,7 +382,7 @@ BEGIN
 END rpt_active_promotions_catalog;
 /
 
--- Report 2: Promotion Campaign Sales & Customer Uplift Audit (Nested Cursor)
+-- Report 2: Promotion Campaign Sales and Customer Uplift Audit (Nested Cursor)
 CREATE OR REPLACE PROCEDURE rpt_promotion_sales_audit (
     p_promo_id IN Promotion.PromotionID%TYPE
 ) AS
@@ -408,7 +423,7 @@ BEGIN
     CLOSE c_promo;
 
     DBMS_OUTPUT.PUT_LINE('========================================================================================');
-    DBMS_OUTPUT.PUT_LINE('                  88 SPEEDMART PROMOTION IMPACT & CUSTOMER SAVINGS AUDIT                ');
+    DBMS_OUTPUT.PUT_LINE('                  88 SPEEDMART PROMOTION IMPACT AND CUSTOMER SAVINGS AUDIT                ');
     DBMS_OUTPUT.PUT_LINE('========================================================================================');
     DBMS_OUTPUT.PUT_LINE('Campaign ID : #' || r_p.PromotionID || ' | Unit Discount: MYR ' || TO_CHAR(r_p.DiscountAmount, 'FM990.00'));
     DBMS_OUTPUT.PUT_LINE('Duration    : ' || TO_CHAR(r_p.StartDate, 'YYYY-MM-DD') || ' to ' || TO_CHAR(r_p.EndDate, 'YYYY-MM-DD'));

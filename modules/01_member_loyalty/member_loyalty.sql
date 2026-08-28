@@ -1,18 +1,19 @@
 -- =============================================================================
--- MODULE 1: MEMBER & LOYALTY MANAGEMENT
+-- MODULE 1: MEMBER and LOYALTY MANAGEMENT
 -- BMCS3183 Advanced Database Management | 88 Speedmart System
 -- =============================================================================
 
 SET LINESIZE 200;
 SET PAGESIZE 50;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
+SET DEFINE OFF;
 
 -- -----------------------------------------------------------------------------
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES, VIEWS, CUSTOM EXCEPTIONS)
 -- -----------------------------------------------------------------------------
 
 
--- Drop existing sequences & indexes for clean re-execution
+-- Drop existing sequences and indexes for clean re-execution
 BEGIN
     EXECUTE IMMEDIATE 'DROP SEQUENCE seq_member_id';
 EXCEPTION WHEN OTHERS THEN NULL;
@@ -40,7 +41,7 @@ CREATE SEQUENCE seq_member_id
 CREATE INDEX idx_member_status_type ON Member (MemberStatus, MembershipType);
 CREATE INDEX idx_redemption_member_order ON PointRedemption (MemberID, OrderID, RedemptionStatus);
 
--- 3. View 1: Member Lifetime Value & Loyalty Engagement (Strategic View)
+-- 3. View 1: Member Lifetime Value and Loyalty Engagement (Strategic View)
 CREATE OR REPLACE VIEW v_member_loyalty_summary AS
 SELECT 
     m.MemberID,
@@ -59,7 +60,7 @@ LEFT JOIN OrderDetail od ON o.OrderID = od.OrderID AND od.LineStatus = 'Active'
 LEFT JOIN PointRedemption pr ON m.MemberID = pr.MemberID AND pr.RedemptionStatus = 'Completed'
 GROUP BY m.MemberID, m.Name, m.MembershipType, m.MemberStatus, m.MemberPoint, m.JoinDate;
 
--- 4. View 2: Voucher Utilization & Discount Impact (Tactical View)
+-- 4. View 2: Voucher Utilization and Discount Impact (Tactical View)
 CREATE OR REPLACE VIEW v_voucher_utilization AS
 SELECT 
     v.VoucherID,
@@ -77,32 +78,43 @@ LEFT JOIN PointRedemption pr ON v.VoucherID = pr.VoucherID
 GROUP BY v.VoucherID, v.VoucherName, v.VoucherType, v.DiscountValue, v.MinimumSpend, v.RequiredPoint, v.VoucherStatus;
 
 -- -----------------------------------------------------------------------------
--- TASK 4: ANALYTICAL & OPERATIONAL QUERIES (2 QUERIES)
+-- TASK 4: ANALYTICAL and OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
 
--- Column formatting for SQL*Plus display
-COLUMN MemberID FORMAT 9999 HEADING "ID";
-COLUMN "Customer Name" FORMAT A20;
-COLUMN "Tier" FORMAT A8;
-COLUMN "Lifetime Spend" FORMAT A15;
-COLUMN "Point Balance" FORMAT 999999 HEADING "Points";
-COLUMN "Last Purchase" FORMAT A13;
-COLUMN "Inactive Months" FORMAT 999.9 HEADING "Months";
-COLUMN "Retention Action Required" FORMAT A28;
+-- -----------------------------------------------------------------------------
+-- SQL*PLUS TERMINAL & COLUMN FORMATTING
+-- -----------------------------------------------------------------------------
+SET LINESIZE 220;
+SET PAGESIZE 100;
+SET FEEDBACK ON;
 
-COLUMN VoucherID FORMAT 9999 HEADING "ID";
-COLUMN "Voucher Name" FORMAT A18;
-COLUMN "Type" FORMAT A14;
-COLUMN "Value" FORMAT A10;
-COLUMN "Pts Cost" FORMAT 999999;
-COLUMN "Total Claims" FORMAT 99999;
-COLUMN "Used Claims" FORMAT 99999;
-COLUMN "Total Pts Burned" FORMAT A16;
-COLUMN "Conversion Rate" FORMAT A15;
+-- Column formatting for Query 1
+COLUMN MemberID                   FORMAT 9999      HEADING "ID";
+COLUMN "Customer Name"            FORMAT A18       HEADING "Customer Name";
+COLUMN "Tier"                     FORMAT A6        HEADING "Tier";
+COLUMN "Lifetime Spend"           FORMAT A14       HEADING "Total Spend";
+COLUMN "Point Balance"            FORMAT 999999    HEADING "Points";
+COLUMN "Last Purchase"            FORMAT A12       HEADING "Last Active";
+COLUMN "Inactive Months"          FORMAT 999.9     HEADING "Months";
+COLUMN "Retention Action Required" FORMAT A32      HEADING "Retention Strategy";
+
+-- Column formatting for Query 2
+COLUMN VoucherID                  FORMAT 9999      HEADING "ID";
+COLUMN "Voucher Name"             FORMAT A22       HEADING "Voucher Campaign";
+COLUMN "Type"                     FORMAT A20       HEADING "Voucher Category";
+COLUMN "Value"                    FORMAT A10       HEADING "Discount";
+COLUMN "Pts Cost"                 FORMAT 999999    HEADING "Pt Cost";
+COLUMN "Total Claims"             FORMAT 99999     HEADING "Claimed";
+COLUMN "Used Claims"              FORMAT 99999     HEADING "Redeemed";
+COLUMN "Total Pts Burned"         FORMAT A16       HEADING "Total Pts Used";
+COLUMN "Conversion Rate"          FORMAT A15       HEADING "Conversion";
 
 
--- Query 1 (Strategic): Inactivity Risk & Customer Segmentation Matrix
--- Identifies VIP & Normal members at risk of churning (> 6 months inactivity) with formatting.
+PROMPT
+PROMPT ========================================================================================
+PROMPT [TASK 4 - QUERY 1] STRATEGIC: MEMBER INACTIVITY RISK AND RETENTION SEGMENTATION
+PROMPT Purpose: Identifies high-value and churn-risk members by inactivity duration and spend.
+PROMPT ========================================================================================
 SELECT 
     v.MemberID,
     RPAD(v.MemberName, 22) AS "Customer Name",
@@ -120,8 +132,11 @@ FROM v_member_loyalty_summary v
 WHERE v.MemberStatus = 'Active'
 ORDER BY v.MonthsSinceLastActivity DESC, v.LifetimeSpend DESC;
 
--- Query 2 (Tactical): High-Value Voucher Campaign ROI Analysis
--- Evaluates discount efficiency and member point burn rate across campaign tiers.
+PROMPT
+PROMPT ========================================================================================
+PROMPT [TASK 4 - QUERY 2] TACTICAL: VOUCHER CAMPAIGN UTILIZATION AND CONVERSION AUDIT
+PROMPT Purpose: Measures voucher claim-to-redemption rates and point burn across campaigns.
+PROMPT ========================================================================================
 SELECT 
     vu.VoucherID,
     RPAD(vu.VoucherName, 25) AS "Voucher Name",
@@ -158,8 +173,8 @@ CREATE OR REPLACE PROCEDURE sp_register_or_renew_member (
     v_count NUMBER;
     v_expiry DATE := NULL;
 BEGIN
-    -- Input Validation & Format Constraints
-    -- Input Validation & Format Constraints
+    -- Input Validation and Format Constraints
+    -- Input Validation and Format Constraints
     IF p_name IS NULL OR LENGTH(TRIM(p_name)) < 2 THEN
         RAISE_APPLICATION_ERROR(-20012, 'Validation Error: Member Name must be at least 2 characters.');
     END IF;
@@ -168,7 +183,7 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20014, 'Validation Error: Password must be at least 6 characters.');
     END IF;
 
-    IF NOT REGEXP_LIKE(p_email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$') THEN
+    IF NOT REGEXP_LIKE(p_email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+[.][A-Za-z]{2,}$') THEN
         RAISE e_invalid_email;
     END IF;
 
@@ -322,7 +337,7 @@ END sp_process_point_redemption;
 -- TASK 6: CONDITIONAL TRIGGERS (2 TRIGGERS)
 -- -----------------------------------------------------------------------------
 
--- Trigger 1: Guard Against Inactive Member Activity & Point Non-Negativity
+-- Trigger 1: Guard Against Inactive Member Activity and Point Non-Negativity
 -- Conditional BEFORE INSERT trigger on PointRedemption.
 CREATE OR REPLACE TRIGGER trg_guard_point_redemption
 BEFORE INSERT ON PointRedemption
@@ -362,7 +377,7 @@ END trg_enforce_vip_expiration;
 -- TASK 7: REPORTS GENERATION WITH NESTED CURSORS (2 REPORTS)
 -- -----------------------------------------------------------------------------
 
--- Report 1: On-Demand Member Loyalty & Order History Statement (Nested Cursor)
+-- Report 1: On-Demand Member Loyalty and Order History Statement (Nested Cursor)
 CREATE OR REPLACE PROCEDURE rpt_member_annual_statement (
     p_member_id IN Member.MemberID%TYPE
 ) AS
@@ -372,7 +387,7 @@ CREATE OR REPLACE PROCEDURE rpt_member_annual_statement (
         FROM Member
         WHERE MemberID = p_member_id;
 
-    -- Child Cursor 1: Order History & Items for this Member (Parameterized)
+    -- Child Cursor 1: Order History and Items for this Member (Parameterized)
     CURSOR c_orders (cp_member_id NUMBER) IS
         SELECT o.OrderID, o.OrderDate, o.OrderStatus, b.BranchName,
                NVL(SUM(od.Quantity * (od.UnitPrice - od.Discount)), 0) AS OrderTotal
@@ -472,7 +487,7 @@ CREATE OR REPLACE PROCEDURE rpt_voucher_performance_summary AS
         FROM Voucher
         ORDER BY VoucherID;
 
-    -- Child Cursor: Redemption Details by Member & Branch
+    -- Child Cursor: Redemption Details by Member and Branch
     CURSOR c_voucher_claims (cp_voucher_id NUMBER) IS
         SELECT pr.PointRedemptionID, pr.RedemptionDate, m.Name AS MemberName, o.OrderID, b.BranchName
         FROM PointRedemption pr

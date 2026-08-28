@@ -1,18 +1,19 @@
 -- =============================================================================
--- MODULE 3: ORDER, PAYMENT & FULFILLMENT MANAGEMENT
+-- MODULE 3: ORDER, PAYMENT and FULFILLMENT MANAGEMENT
 -- BMCS3183 Advanced Database Management | 88 Speedmart System
 -- =============================================================================
 
 SET LINESIZE 200;
 SET PAGESIZE 50;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
+SET DEFINE OFF;
 
 -- -----------------------------------------------------------------------------
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES, VIEWS, CUSTOM EXCEPTIONS)
 -- -----------------------------------------------------------------------------
 
 
--- Drop existing sequences & indexes for clean re-execution
+-- Drop existing sequences and indexes for clean re-execution
 BEGIN
     EXECUTE IMMEDIATE 'DROP SEQUENCE seq_order_id';
 EXCEPTION WHEN OTHERS THEN NULL;
@@ -85,7 +86,7 @@ GROUP BY
     b.BranchID, b.BranchName, d.DeliveryID, pk.PickupID, ds.CompanyName, 
     d.TrackingNumber, pk.PickupCode, ds.DeliveryCharge, p.PaymentMethod, p.PaymentStatus;
 
--- 4. View 2: Third-Party Courier Performance & Revenue (Tactical View)
+-- 4. View 2: Third-Party Courier Performance and Revenue (Tactical View)
 CREATE OR REPLACE VIEW v_courier_delivery_efficiency AS
 SELECT 
     ds.DeliveryServiceID,
@@ -102,29 +103,40 @@ LEFT JOIN Delivery d ON ds.DeliveryServiceID = d.DeliveryServiceID
 GROUP BY ds.DeliveryServiceID, ds.CompanyName, ds.CompanyStatus, ds.DeliveryCharge;
 
 -- -----------------------------------------------------------------------------
--- TASK 4: ANALYTICAL & OPERATIONAL QUERIES (2 QUERIES)
+-- TASK 4: ANALYTICAL and OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
 
--- Column formatting for SQL*Plus display
-COLUMN BranchID FORMAT 9999 HEADING "Branch";
-COLUMN "Branch Location" FORMAT A22;
-COLUMN "Total Orders" FORMAT 99999;
-COLUMN "Delivery Orders" FORMAT 99999;
-COLUMN "Pickup Orders" FORMAT 99999;
-COLUMN "Net Sales Revenue" FORMAT A18;
-COLUMN "Avg Line Value" FORMAT A15;
+-- -----------------------------------------------------------------------------
+-- SQL*PLUS TERMINAL & COLUMN FORMATTING
+-- -----------------------------------------------------------------------------
+SET LINESIZE 220;
+SET PAGESIZE 100;
+SET FEEDBACK ON;
 
-COLUMN "Courier ID" FORMAT 9999;
-COLUMN "Courier Name" FORMAT A22;
-COLUMN "Total Handled" FORMAT 99999;
-COLUMN "Completed" FORMAT 99999;
-COLUMN "In-Transit Backlog" FORMAT 99999;
-COLUMN "Success Rate" FORMAT A14;
-COLUMN "Total Freight (MYR)" FORMAT A18;
+-- Column formatting for Query 1
+COLUMN BranchID             FORMAT 9999      HEADING "Branch";
+COLUMN "Branch Location"    FORMAT A24       HEADING "Branch Location";
+COLUMN "Total Orders"       FORMAT 99999     HEADING "Orders";
+COLUMN "Delivery Orders"    FORMAT 99999     HEADING "Delivery";
+COLUMN "Pickup Orders"      FORMAT 99999     HEADING "Pickup";
+COLUMN "Net Sales Revenue"  FORMAT A18       HEADING "Net Revenue (MYR)";
+COLUMN "Avg Line Value"     FORMAT A15       HEADING "Avg Line Value";
+
+-- Column formatting for Query 2
+COLUMN "Courier ID"         FORMAT 9999      HEADING "Courier";
+COLUMN "Courier Name"       FORMAT A22       HEADING "Courier Partner";
+COLUMN "Total Handled"      FORMAT 99999     HEADING "Total Dispatches";
+COLUMN "Completed"          FORMAT 99999     HEADING "Delivered";
+COLUMN "In-Transit Backlog" FORMAT 99999     HEADING "In-Transit";
+COLUMN "Success Rate"       FORMAT A14       HEADING "SLA Rate";
+COLUMN "Total Freight (MYR)" FORMAT A18      HEADING "Total Freight";
 
 
--- Query 1 (Strategic): Omnichannel Sales Distribution & Revenue by Fulfillment Method
--- Analyzes sales split between Pickup and Delivery per retail branch.
+PROMPT
+PROMPT ========================================================================================
+PROMPT [TASK 4 - QUERY 1] STRATEGIC: OMNICHANNEL SALES DISTRIBUTION AND FULFILLMENT REVENUE
+PROMPT Purpose: Compares in-store pickup vs courier delivery revenue split across retail branches.
+PROMPT ========================================================================================
 SELECT 
     b.BranchID,
     RPAD(b.BranchName, 22) AS "Branch Location",
@@ -142,8 +154,11 @@ WHERE o.OrderStatus = 'Completed'
 GROUP BY b.BranchID, b.BranchName
 ORDER BY SUM(od.Quantity * (od.UnitPrice - od.Discount)) DESC;
 
--- Query 2 (Tactical): Courier Partner SLA & Delivery Success Rate Analysis
--- Evaluates logistics partner reliability and pending delivery backlogs.
+PROMPT
+PROMPT ========================================================================================
+PROMPT [TASK 4 - QUERY 2] TACTICAL: COURIER PARTNER SLA AND DELIVERY SUCCESS RATE ANALYSIS
+PROMPT Purpose: Audits third-party delivery services for transit reliability and freight cost.
+PROMPT ========================================================================================
 SELECT 
     ds.DeliveryServiceID AS "Courier ID",
     RPAD(ds.CompanyName, 24) AS "Courier Name",
@@ -233,7 +248,7 @@ EXCEPTION
 END sp_create_pickup_order;
 /
 
--- Procedure 2: Settle Order Payment & Award Loyalty Points
+-- Procedure 2: Settle Order Payment and Award Loyalty Points
 -- Settles payment, updates Order status to Completed, and calculates + awards points.
 CREATE OR REPLACE PROCEDURE sp_settle_order_payment (
     p_order_id       IN CustomerOrder.OrderID%TYPE,
@@ -255,7 +270,7 @@ CREATE OR REPLACE PROCEDURE sp_settle_order_payment (
     v_payment_id   NUMBER;
     v_pts_earned   NUMBER;
 BEGIN
-    -- 1. Validate Input Parameters & Format Constraints
+    -- 1. Validate Input Parameters and Format Constraints
     IF p_order_id <= 0 THEN
         RAISE_APPLICATION_ERROR(-20212, 'Validation Error: Order ID must be a positive integer.');
     END IF;
@@ -332,7 +347,7 @@ END sp_settle_order_payment;
 -- TASK 6: CONDITIONAL TRIGGERS (2 TRIGGERS)
 -- -----------------------------------------------------------------------------
 
--- Trigger 1: Enforce Mutual Exclusivity between Delivery and Pickup (Rule & Assumption 2)
+-- Trigger 1: Enforce Mutual Exclusivity between Delivery and Pickup (Rule and Assumption 2)
 CREATE OR REPLACE TRIGGER trg_guard_exclusive_delivery
 BEFORE INSERT ON Delivery
 FOR EACH ROW
@@ -363,11 +378,11 @@ END trg_guard_paid_payment_state;
 -- TASK 7: REPORTS GENERATION WITH NESTED CURSORS (2 REPORTS)
 -- -----------------------------------------------------------------------------
 
--- Report 1: Official Order Tax Invoice & Receipt (Nested Cursor)
+-- Report 1: Official Order Tax Invoice and Receipt (Nested Cursor)
 CREATE OR REPLACE PROCEDURE rpt_order_tax_invoice (
     p_order_id IN CustomerOrder.OrderID%TYPE
 ) AS
-    -- Parent Cursor: Order, Customer, Branch & Fulfillment Header
+    -- Parent Cursor: Order, Customer, Branch and Fulfillment Header
     CURSOR c_order_hdr IS
         SELECT 
             o.OrderID, o.OrderDate, o.OrderStatus,
@@ -460,7 +475,7 @@ CREATE OR REPLACE PROCEDURE rpt_branch_daily_manifest (
     CURSOR c_branch IS
         SELECT BranchID, BranchName, City, State FROM Branch WHERE BranchID = p_branch_id;
 
-    -- Child Cursor 1: Pending & Ready Pickup Orders
+    -- Child Cursor 1: Pending and Ready Pickup Orders
     CURSOR c_pickups (cp_branch_id NUMBER) IS
         SELECT o.OrderID, m.Name AS CustomerName, m.PhoneNo, pk.PickupCode, pk.PickupStatus
         FROM CustomerOrder o
@@ -496,7 +511,7 @@ BEGIN
     CLOSE c_branch;
 
     DBMS_OUTPUT.PUT_LINE('========================================================================================');
-    DBMS_OUTPUT.PUT_LINE('                  88 SPEEDMART DAILY STORE DISPATCH & PICKUP MANIFEST                   ');
+    DBMS_OUTPUT.PUT_LINE('                  88 SPEEDMART DAILY STORE DISPATCH AND PICKUP MANIFEST                   ');
     DBMS_OUTPUT.PUT_LINE('========================================================================================');
     DBMS_OUTPUT.PUT_LINE('Branch: #' || r_br.BranchID || ' - ' || r_br.BranchName || ' (' || r_br.City || ', ' || r_br.State || ')');
     DBMS_OUTPUT.PUT_LINE('Date  : ' || TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'));

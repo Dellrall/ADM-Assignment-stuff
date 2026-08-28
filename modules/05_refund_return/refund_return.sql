@@ -1,18 +1,19 @@
 -- =============================================================================
--- MODULE 5: REFUND & RETURN MANAGEMENT (SELECTED ADDITIONAL MODULE)
+-- MODULE 5: REFUND and RETURN MANAGEMENT (SELECTED ADDITIONAL MODULE)
 -- BMCS3183 Advanced Database Management | 88 Speedmart System
 -- =============================================================================
 
 SET LINESIZE 200;
 SET PAGESIZE 50;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
+SET DEFINE OFF;
 
 -- -----------------------------------------------------------------------------
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES, VIEWS, CUSTOM EXCEPTIONS)
 -- -----------------------------------------------------------------------------
 
 
--- Drop existing sequences & indexes for clean re-execution
+-- Drop existing sequences and indexes for clean re-execution
 BEGIN
     EXECUTE IMMEDIATE 'DROP SEQUENCE seq_refund_id';
 EXCEPTION WHEN OTHERS THEN NULL;
@@ -67,7 +68,7 @@ GROUP BY
     r.ReturnMethod, r.RefundAmount, o.OrderID, o.OrderDate, 
     m.MemberID, m.Name, b.BranchID, b.BranchName;
 
--- 4. View 2: Defective & Expired Product Spoilage Loss (Tactical View)
+-- 4. View 2: Defective and Expired Product Spoilage Loss (Tactical View)
 CREATE OR REPLACE VIEW v_defective_item_loss AS
 SELECT 
     i.ItemID,
@@ -86,32 +87,43 @@ WHERE r.RefundStatus IN ('Approved', 'Completed')
 GROUP BY i.ItemID, i.ItemName, i.Brand, i.Price;
 
 -- -----------------------------------------------------------------------------
--- TASK 4: ANALYTICAL & OPERATIONAL QUERIES (2 QUERIES)
+-- TASK 4: ANALYTICAL and OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
 
--- Column formatting for SQL*Plus display
-COLUMN "Item #" FORMAT 9999;
-COLUMN "Product Name" FORMAT A22;
-COLUMN "Brand" FORMAT A14;
-COLUMN "Damaged" FORMAT 99999;
-COLUMN "Defective" FORMAT 99999;
-COLUMN "Expired" FORMAT 99999;
-COLUMN "Total Flawed Units" FORMAT 99999;
-COLUMN "Total Loss (MYR)" FORMAT A16;
-COLUMN "Action Plan" FORMAT A24;
+-- -----------------------------------------------------------------------------
+-- SQL*PLUS TERMINAL & COLUMN FORMATTING
+-- -----------------------------------------------------------------------------
+SET LINESIZE 220;
+SET PAGESIZE 100;
+SET FEEDBACK ON;
 
-COLUMN "Branch #" FORMAT 9999;
-COLUMN "Branch Name" FORMAT A22;
-COLUMN "Total Claims" FORMAT 99999;
-COLUMN "Approved" FORMAT 99999;
-COLUMN "Rejected" FORMAT 99999;
-COLUMN "Pending" FORMAT 99999;
-COLUMN "Total Payout (MYR)" FORMAT A18;
-COLUMN "Approval Rate" FORMAT A14;
+-- Column formatting for Query 1
+COLUMN "Item #"             FORMAT 9999      HEADING "Item";
+COLUMN "Product Name"       FORMAT A24       HEADING "Product Name";
+COLUMN "Brand"              FORMAT A14       HEADING "Brand";
+COLUMN "Damaged"            FORMAT 99999     HEADING "Damage";
+COLUMN "Defective"          FORMAT 99999     HEADING "Defect";
+COLUMN "Expired"            FORMAT 99999     HEADING "Expired";
+COLUMN "Total Flawed Units" FORMAT 99999     HEADING "Total Flaws";
+COLUMN "Total Loss (MYR)"   FORMAT A16       HEADING "Total Loss (MYR)";
+COLUMN "Action Plan"        FORMAT A26       HEADING "Supplier Action Plan";
+
+-- Column formatting for Query 2
+COLUMN "Branch #"           FORMAT 9999      HEADING "Branch";
+COLUMN "Branch Name"        FORMAT A24       HEADING "Retail Branch";
+COLUMN "Total Claims"       FORMAT 99999     HEADING "Claims";
+COLUMN "Approved"           FORMAT 99999     HEADING "Approved";
+COLUMN "Rejected"           FORMAT 99999     HEADING "Rejected";
+COLUMN "Pending"            FORMAT 99999     HEADING "Pending";
+COLUMN "Total Payout (MYR)" FORMAT A18       HEADING "Total Payout (MYR)";
+COLUMN "Approval Rate"      FORMAT A14       HEADING "Approval %";
 
 
--- Query 1 (Strategic): Quality Control & Product Defect Loss Ranking
--- Identifies top merchandise generating customer returns and monetary write-off losses.
+PROMPT
+PROMPT ========================================================================================
+PROMPT [TASK 4 - QUERY 1] STRATEGIC: QUALITY CONTROL AND PRODUCT DEFECT LOSS RANKING
+PROMPT Purpose: Ranks items by defect volume and financial loss to enforce supplier quality.
+PROMPT ========================================================================================
 SELECT 
     v.ItemID AS "Item #",
     RPAD(v.ItemName, 24) AS "Product Name",
@@ -129,8 +141,11 @@ SELECT
 FROM v_defective_item_loss v
 ORDER BY v.TotalMonetaryLoss DESC;
 
--- Query 2 (Tactical): Retail Branch Refund Frequency & Operational Risk Analysis
--- Analyzes refund claim distributions across branches to spot handling deficiencies.
+PROMPT
+PROMPT ========================================================================================
+PROMPT [TASK 4 - QUERY 2] TACTICAL: RETAIL BRANCH REFUND FREQUENCY AND RISK ANALYSIS
+PROMPT Purpose: Evaluates claim adjudication rates, dispute volumes, and financial payout per store.
+PROMPT ========================================================================================
 SELECT 
     b.BranchID AS "Branch #",
     RPAD(b.BranchName, 24) AS "Branch Name",
@@ -173,7 +188,7 @@ CREATE OR REPLACE PROCEDURE sp_submit_refund_claim (
     v_existing_cnt NUMBER;
     v_refund_val   NUMBER;
 BEGIN
-    -- 1. Validate Input Parameters & Format Constraints
+    -- 1. Validate Input Parameters and Format Constraints
     IF p_order_id <= 0 OR p_item_id <= 0 OR p_qty <= 0 THEN
         RAISE_APPLICATION_ERROR(-20412, 'Validation Error: Order ID, Item ID, and Quantity must be positive integers.');
     END IF;
@@ -191,7 +206,7 @@ BEGIN
         RAISE e_invalid_condition;
     END IF;
 
-    -- 2. Validate Order Status & Recency (Rule 31)
+    -- 2. Validate Order Status and Recency (Rule 31)
     SELECT OrderStatus, OrderDate INTO v_order_status, v_order_date
     FROM CustomerOrder
     WHERE OrderID = p_order_id;
@@ -260,7 +275,7 @@ EXCEPTION
 END sp_submit_refund_claim;
 /
 
--- Procedure 2: Approve or Reject Refund Claim & Settle Payment State
+-- Procedure 2: Approve or Reject Refund Claim and Settle Payment State
 CREATE OR REPLACE PROCEDURE sp_adjudicate_refund (
     p_refund_id IN Refund.RefundID%TYPE,
     p_decision  IN VARCHAR2, -- 'Approved' or 'Rejected'
@@ -372,7 +387,7 @@ END trg_guard_refund_amount_limit;
 -- TASK 7: REPORTS GENERATION WITH NESTED CURSORS (2 REPORTS)
 -- -----------------------------------------------------------------------------
 
--- Report 1: Detailed Refund Incident & Evidence Dossier (Nested Cursor)
+-- Report 1: Detailed Refund Incident and Evidence Dossier (Nested Cursor)
 CREATE OR REPLACE PROCEDURE rpt_refund_claim_dossier (
     p_refund_id IN Refund.RefundID%TYPE
 ) AS
@@ -413,7 +428,7 @@ BEGIN
     CLOSE c_refund_hdr;
 
     DBMS_OUTPUT.PUT_LINE('========================================================================================');
-    DBMS_OUTPUT.PUT_LINE('                     88 SPEEDMART REFUND CLAIM & EVIDENCE DOSSIER                       ');
+    DBMS_OUTPUT.PUT_LINE('                     88 SPEEDMART REFUND CLAIM AND EVIDENCE DOSSIER                       ');
     DBMS_OUTPUT.PUT_LINE('========================================================================================');
     DBMS_OUTPUT.PUT_LINE('Claim Ref   : #' || RPAD(r_ref.RefundID, 12) || 'Lodged Date : ' || TO_CHAR(r_ref.RefundDate, 'YYYY-MM-DD'));
     DBMS_OUTPUT.PUT_LINE('Status      : ' || RPAD(r_ref.RefundStatus, 12) || 'Order Ref   : #' || r_ref.OrderID || ' (Ordered: ' || TO_CHAR(r_ref.OrderDate, 'YYYY-MM-DD') || ')');
@@ -444,7 +459,7 @@ BEGIN
 END rpt_refund_claim_dossier;
 /
 
--- Report 2: Branch Defect & Spoilage Quality Audit (Nested Cursor)
+-- Report 2: Branch Defect and Spoilage Quality Audit (Nested Cursor)
 CREATE OR REPLACE PROCEDURE rpt_branch_quality_audit (
     p_branch_id IN Branch.BranchID%TYPE
 ) AS
@@ -487,7 +502,7 @@ BEGIN
     CLOSE c_branch;
 
     DBMS_OUTPUT.PUT_LINE('========================================================================================');
-    DBMS_OUTPUT.PUT_LINE('                   88 SPEEDMART BRANCH QUALITY & SPOILAGE AUDIT                         ');
+    DBMS_OUTPUT.PUT_LINE('                   88 SPEEDMART BRANCH QUALITY AND SPOILAGE AUDIT                         ');
     DBMS_OUTPUT.PUT_LINE('========================================================================================');
     DBMS_OUTPUT.PUT_LINE('Branch: #' || r_b.BranchID || ' - ' || r_b.BranchName || ' (' || r_b.City || ', ' || r_b.State || ')');
     DBMS_OUTPUT.PUT_LINE('Date  : ' || TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'));
