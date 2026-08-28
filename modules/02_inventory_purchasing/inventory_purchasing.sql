@@ -93,6 +93,7 @@ GROUP BY sup.SupplierID, sup.CompanyName, sup.SupplierStatus;
 SET LINESIZE 220;
 SET PAGESIZE 100;
 SET FEEDBACK ON;
+SET RECSEP OFF;
 
 -- Column formatting for Query 1
 COLUMN BranchID                FORMAT 9999      HEADING "Branch";
@@ -136,6 +137,19 @@ JOIN Stock s ON b.BranchID = s.BranchID
 JOIN Item i ON s.ItemID = i.ItemID
 WHERE s.Quantity <= s.ReorderLevel
 ORDER BY b.BranchID, (s.MaximumStock - s.Quantity) DESC;
+
+-- Strategic Replenishment Totals & Budget Required
+PROMPT ----------------------------------------------------------------------------------------
+PROMPT REORDER DEFICIENCY & BUDGET FORECAST TOTALS:
+SELECT 
+    COUNT(DISTINCT s.BranchID) AS "Branches in Deficit",
+    COUNT(*) AS "Deficient SKU Lines",
+    SUM(s.MaximumStock - s.Quantity) AS "Total Units Needed",
+    TO_CHAR(SUM((s.MaximumStock - s.Quantity) * i.Price), 'FM$999,990.00') AS "Total Restock Budget (MYR)"
+FROM Stock s
+JOIN Item i ON s.ItemID = i.ItemID
+WHERE s.Quantity <= s.ReorderLevel;
+PROMPT CONCLUSION: Critical stock deficit across store network requires immediate purchase order generation to avoid stockout losses.
 
 PROMPT
 PROMPT ========================================================================================

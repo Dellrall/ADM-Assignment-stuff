@@ -96,6 +96,7 @@ GROUP BY i.ItemID, i.ItemName, i.Brand, i.Price;
 SET LINESIZE 220;
 SET PAGESIZE 100;
 SET FEEDBACK ON;
+SET RECSEP OFF;
 
 -- Column formatting for Query 1
 COLUMN "Item #"             FORMAT 9999      HEADING "Item";

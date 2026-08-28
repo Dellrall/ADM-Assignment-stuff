@@ -89,6 +89,7 @@ GROUP BY p.PromotionID, p.DiscountAmount, p.StartDate, p.EndDate;
 SET LINESIZE 220;
 SET PAGESIZE 100;
 SET FEEDBACK ON;
+SET RECSEP OFF;
 
 -- Column formatting for Query 1
 COLUMN "Campaign ID"          FORMAT 9999      HEADING "Promo ID";

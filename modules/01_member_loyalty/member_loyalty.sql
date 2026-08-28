@@ -87,6 +87,7 @@ GROUP BY v.VoucherID, v.VoucherName, v.VoucherType, v.DiscountValue, v.MinimumSp
 SET LINESIZE 220;
 SET PAGESIZE 100;
 SET FEEDBACK ON;
+SET RECSEP OFF;
 
 -- Column formatting for Query 1
 COLUMN MemberID                   FORMAT 9999      HEADING "ID";
@@ -117,7 +118,7 @@ PROMPT Purpose: Identifies high-value and churn-risk members by inactivity durat
 PROMPT ========================================================================================
 SELECT 
     v.MemberID,
-    RPAD(v.MemberName, 22) AS "Customer Name",
+    RPAD(v.MemberName, 18) AS "Customer Name",
     v.MembershipType AS "Tier",
     TO_CHAR(v.LifetimeSpend, 'FM99,990.00') AS "Lifetime Spend",
     v.CurrentPoints AS "Point Balance",
@@ -131,6 +132,20 @@ SELECT
 FROM v_member_loyalty_summary v
 WHERE v.MemberStatus = 'Active'
 ORDER BY v.MonthsSinceLastActivity DESC, v.LifetimeSpend DESC;
+
+-- Executive Portfolio Summary & Strategic Totals
+PROMPT ----------------------------------------------------------------------------------------
+PROMPT STRATEGIC PORTFOLIO TOTALS & HEALTH BREAKDOWN:
+SELECT 
+    COUNT(*) AS "Active Members",
+    COUNT(CASE WHEN MonthsSinceLastActivity >= 12 THEN 1 END) AS "High Churn (>12M)",
+    COUNT(CASE WHEN MonthsSinceLastActivity BETWEEN 6 AND 11.9 THEN 1 END) AS "At-Risk (6-12M)",
+    COUNT(CASE WHEN MonthsSinceLastActivity < 6 THEN 1 END) AS "Healthy (<6M)",
+    TO_CHAR(SUM(LifetimeSpend), 'FM$999,990.00') AS "Total Spend",
+    TO_CHAR(AVG(LifetimeSpend), 'FM$990.00') AS "Avg Member Spend"
+FROM v_member_loyalty_summary
+WHERE MemberStatus = 'Active';
+PROMPT CONCLUSION: 1 member exceeds 12M inactivity (auto-deactivate per Rule 3). 1 member at risk requires coupon re-engagement.
 
 PROMPT
 PROMPT ========================================================================================

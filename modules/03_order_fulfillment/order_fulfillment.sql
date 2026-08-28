@@ -112,6 +112,7 @@ GROUP BY ds.DeliveryServiceID, ds.CompanyName, ds.CompanyStatus, ds.DeliveryChar
 SET LINESIZE 220;
 SET PAGESIZE 100;
 SET FEEDBACK ON;
+SET RECSEP OFF;
 
 -- Column formatting for Query 1
 COLUMN BranchID             FORMAT 9999      HEADING "Branch";
