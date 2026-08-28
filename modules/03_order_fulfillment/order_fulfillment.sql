@@ -3,6 +3,8 @@
 -- BMCS3183 Advanced Database Management | 88 Speedmart System
 -- =============================================================================
 
+SET LINESIZE 200;
+SET PAGESIZE 50;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
 
 -- -----------------------------------------------------------------------------
@@ -102,6 +104,24 @@ GROUP BY ds.DeliveryServiceID, ds.CompanyName, ds.CompanyStatus, ds.DeliveryChar
 -- -----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL & OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
+
+-- Column formatting for SQL*Plus display
+COLUMN BranchID FORMAT 9999 HEADING "Branch";
+COLUMN "Branch Location" FORMAT A22;
+COLUMN "Total Orders" FORMAT 99999;
+COLUMN "Delivery Orders" FORMAT 99999;
+COLUMN "Pickup Orders" FORMAT 99999;
+COLUMN "Net Sales Revenue" FORMAT A18;
+COLUMN "Avg Line Value" FORMAT A15;
+
+COLUMN "Courier ID" FORMAT 9999;
+COLUMN "Courier Name" FORMAT A22;
+COLUMN "Total Handled" FORMAT 99999;
+COLUMN "Completed" FORMAT 99999;
+COLUMN "In-Transit Backlog" FORMAT 99999;
+COLUMN "Success Rate" FORMAT A14;
+COLUMN "Total Freight (MYR)" FORMAT A18;
+
 
 -- Query 1 (Strategic): Omnichannel Sales Distribution & Revenue by Fulfillment Method
 -- Analyzes sales split between Pickup and Delivery per retail branch.

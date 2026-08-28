@@ -3,6 +3,8 @@
 -- BMCS3183 Advanced Database Management | 88 Speedmart System
 -- =============================================================================
 
+SET LINESIZE 200;
+SET PAGESIZE 50;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
 
 -- -----------------------------------------------------------------------------
@@ -86,6 +88,27 @@ GROUP BY i.ItemID, i.ItemName, i.Brand, i.Price;
 -- -----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL & OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
+
+-- Column formatting for SQL*Plus display
+COLUMN "Item #" FORMAT 9999;
+COLUMN "Product Name" FORMAT A22;
+COLUMN "Brand" FORMAT A14;
+COLUMN "Damaged" FORMAT 99999;
+COLUMN "Defective" FORMAT 99999;
+COLUMN "Expired" FORMAT 99999;
+COLUMN "Total Flawed Units" FORMAT 99999;
+COLUMN "Total Loss (MYR)" FORMAT A16;
+COLUMN "Action Plan" FORMAT A24;
+
+COLUMN "Branch #" FORMAT 9999;
+COLUMN "Branch Name" FORMAT A22;
+COLUMN "Total Claims" FORMAT 99999;
+COLUMN "Approved" FORMAT 99999;
+COLUMN "Rejected" FORMAT 99999;
+COLUMN "Pending" FORMAT 99999;
+COLUMN "Total Payout (MYR)" FORMAT A18;
+COLUMN "Approval Rate" FORMAT A14;
+
 
 -- Query 1 (Strategic): Quality Control & Product Defect Loss Ranking
 -- Identifies top merchandise generating customer returns and monetary write-off losses.

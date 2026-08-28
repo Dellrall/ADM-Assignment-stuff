@@ -3,6 +3,8 @@
 -- BMCS3183 Advanced Database Management | 88 Speedmart System
 -- =============================================================================
 
+SET LINESIZE 200;
+SET PAGESIZE 50;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
 
 -- -----------------------------------------------------------------------------
@@ -83,6 +85,27 @@ GROUP BY sup.SupplierID, sup.CompanyName, sup.SupplierStatus;
 -- -----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL & OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
+
+-- Column formatting for SQL*Plus display
+COLUMN BranchID FORMAT 9999 HEADING "Branch";
+COLUMN "Branch Name" FORMAT A22;
+COLUMN ItemID FORMAT 9999 HEADING "Item";
+COLUMN "Item Description" FORMAT A22;
+COLUMN "Current Stock" FORMAT 999999;
+COLUMN "Reorder Threshold" FORMAT 999999;
+COLUMN "Capacity Limit" FORMAT 999999;
+COLUMN "Suggested Reorder Qty" FORMAT 999999;
+COLUMN "Estimated Cost (MYR)" FORMAT A20;
+
+COLUMN BatchID FORMAT 999999 HEADING "Batch";
+COLUMN "Item Name" FORMAT A22;
+COLUMN "Warehouse Branch" FORMAT A20;
+COLUMN "Units In Batch" FORMAT 999999;
+COLUMN "Received Date" FORMAT A13;
+COLUMN "Expiry Date" FORMAT A13;
+COLUMN "Days Remaining" FORMAT 999999;
+COLUMN "At-Risk Value (MYR)" FORMAT A18;
+
 
 -- Query 1 (Strategic): Stock Replenishment Deficiency & Reorder Forecast
 -- Discovers items across branches falling below reorder threshold and calculates capital required.

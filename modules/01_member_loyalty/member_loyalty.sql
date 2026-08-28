@@ -3,6 +3,8 @@
 -- BMCS3183 Advanced Database Management | 88 Speedmart System
 -- =============================================================================
 
+SET LINESIZE 200;
+SET PAGESIZE 50;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
 
 -- -----------------------------------------------------------------------------
@@ -77,6 +79,27 @@ GROUP BY v.VoucherID, v.VoucherName, v.VoucherType, v.DiscountValue, v.MinimumSp
 -- -----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL & OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
+
+-- Column formatting for SQL*Plus display
+COLUMN MemberID FORMAT 9999 HEADING "ID";
+COLUMN "Customer Name" FORMAT A20;
+COLUMN "Tier" FORMAT A8;
+COLUMN "Lifetime Spend" FORMAT A15;
+COLUMN "Point Balance" FORMAT 999999 HEADING "Points";
+COLUMN "Last Purchase" FORMAT A13;
+COLUMN "Inactive Months" FORMAT 999.9 HEADING "Months";
+COLUMN "Retention Action Required" FORMAT A28;
+
+COLUMN VoucherID FORMAT 9999 HEADING "ID";
+COLUMN "Voucher Name" FORMAT A18;
+COLUMN "Type" FORMAT A14;
+COLUMN "Value" FORMAT A10;
+COLUMN "Pts Cost" FORMAT 999999;
+COLUMN "Total Claims" FORMAT 99999;
+COLUMN "Used Claims" FORMAT 99999;
+COLUMN "Total Pts Burned" FORMAT A16;
+COLUMN "Conversion Rate" FORMAT A15;
+
 
 -- Query 1 (Strategic): Inactivity Risk & Customer Segmentation Matrix
 -- Identifies VIP & Normal members at risk of churning (> 6 months inactivity) with formatting.

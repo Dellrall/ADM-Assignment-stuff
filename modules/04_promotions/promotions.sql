@@ -3,6 +3,8 @@
 -- BMCS3183 Advanced Database Management | 88 Speedmart System
 -- =============================================================================
 
+SET LINESIZE 200;
+SET PAGESIZE 50;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
 
 -- -----------------------------------------------------------------------------
@@ -79,6 +81,26 @@ GROUP BY p.PromotionID, p.DiscountAmount, p.StartDate, p.EndDate;
 -- -----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL & OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
+
+-- Column formatting for SQL*Plus display
+COLUMN "Campaign ID" FORMAT 9999;
+COLUMN "Start Date" FORMAT A12;
+COLUMN "End Date" FORMAT A12;
+COLUMN "Items Included" FORMAT 99999;
+COLUMN "Units Sold" FORMAT 99999;
+COLUMN "Gross Sales" FORMAT A16;
+COLUMN "Discounts Given" FORMAT A16;
+COLUMN "Performance Category" FORMAT A24;
+
+COLUMN "Promo #" FORMAT 9999;
+COLUMN "Item #" FORMAT 9999;
+COLUMN "Item Name" FORMAT A22;
+COLUMN "Brand" FORMAT A14;
+COLUMN "Base Price" FORMAT A12;
+COLUMN "Promo Price" FORMAT A12;
+COLUMN "Margin Cut" FORMAT A12;
+COLUMN "Time Remaining" FORMAT A16;
+
 
 -- Query 1 (Strategic): Promotion Campaign Revenue & Discount Absorption Analysis
 -- Analyzes campaign efficiency and margin impact across all promotional campaigns.
