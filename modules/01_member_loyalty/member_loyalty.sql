@@ -78,37 +78,54 @@ LEFT JOIN PointRedemption pr ON v.VoucherID = pr.VoucherID
 GROUP BY v.VoucherID, v.VoucherName, v.VoucherType, v.DiscountValue, v.MinimumSpend, v.RequiredPoint, v.VoucherStatus;
 
 -- -----------------------------------------------------------------------------
+-- -----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL and OPERATIONAL QUERIES (2 QUERIES)
 -- -----------------------------------------------------------------------------
 
 -- -----------------------------------------------------------------------------
--- SQL*PLUS TERMINAL & COLUMN FORMATTING
+-- SQL*PLUS TERMINAL and COLUMN FORMATTING (COMPACT HALF-SCREEN ALIGNMENT)
 -- -----------------------------------------------------------------------------
-SET LINESIZE 220;
+SET LINESIZE 120;
 SET PAGESIZE 100;
-SET FEEDBACK ON;
+SET FEEDBACK OFF;
 SET RECSEP OFF;
+SET DEFINE OFF;
 
--- Column formatting for Query 1
-COLUMN MemberID                   FORMAT 9999      HEADING "ID";
-COLUMN "Customer Name"            FORMAT A18       HEADING "Customer Name";
-COLUMN "Tier"                     FORMAT A6        HEADING "Tier";
-COLUMN "Lifetime Spend"           FORMAT A14       HEADING "Total Spend";
-COLUMN "Point Balance"            FORMAT 999999    HEADING "Points";
-COLUMN "Last Purchase"            FORMAT A12       HEADING "Last Active";
-COLUMN "Inactive Months"          FORMAT 999.9     HEADING "Months";
-COLUMN "Retention Action Required" FORMAT A32      HEADING "Retention Strategy";
+-- Formatting for Query 1
+COLUMN MemberID                   FORMAT 9999       HEADING "ID";
+COLUMN "Customer Name"            FORMAT A16        HEADING "Customer Name";
+COLUMN "Tier"                     FORMAT A6         HEADING "Tier";
+COLUMN "Spend (MYR)"              FORMAT A12        HEADING "Spend (MYR)";
+COLUMN "Point Balance"            FORMAT 99999      HEADING "Points";
+COLUMN "Last Active"              FORMAT A11        HEADING "Last Active";
+COLUMN "Months"                   FORMAT 999.9      HEADING "Months";
+COLUMN "Retention Strategy"       FORMAT A26        HEADING "Retention Strategy";
 
--- Column formatting for Query 2
-COLUMN VoucherID                  FORMAT 9999      HEADING "ID";
-COLUMN "Voucher Name"             FORMAT A22       HEADING "Voucher Campaign";
-COLUMN "Type"                     FORMAT A20       HEADING "Voucher Category";
-COLUMN "Value"                    FORMAT A10       HEADING "Discount";
-COLUMN "Pts Cost"                 FORMAT 999999    HEADING "Pt Cost";
-COLUMN "Total Claims"             FORMAT 99999     HEADING "Claimed";
-COLUMN "Used Claims"              FORMAT 99999     HEADING "Redeemed";
-COLUMN "Total Pts Burned"         FORMAT A16       HEADING "Total Pts Used";
-COLUMN "Conversion Rate"          FORMAT A15       HEADING "Conversion";
+-- Formatting for Query 1 Summary
+COLUMN "Active Members"           FORMAT 999999     HEADING "Active";
+COLUMN "High Churn (>12M)"        FORMAT 999999     HEADING "Churn>12M";
+COLUMN "At-Risk (6-12M)"          FORMAT 999999     HEADING "Risk 6-12M";
+COLUMN "Healthy (<6M)"            FORMAT 999999     HEADING "Healthy<6M";
+COLUMN "Total Spend"              FORMAT A14        HEADING "Total Spend";
+COLUMN "Avg Spend"                FORMAT A14        HEADING "Avg Spend";
+
+-- Formatting for Query 2
+COLUMN VoucherID                  FORMAT 9999       HEADING "ID";
+COLUMN "Voucher Campaign"         FORMAT A18        HEADING "Voucher Campaign";
+COLUMN "Category"                 FORMAT A14        HEADING "Category";
+COLUMN "Discount"                 FORMAT A8         HEADING "Discount";
+COLUMN "Pts Cost"                 FORMAT 9999       HEADING "Cost";
+COLUMN "Claims"                   FORMAT 9999       HEADING "Claim";
+COLUMN "Used"                     FORMAT 9999       HEADING "Used";
+COLUMN "Pts Burned"               FORMAT A10        HEADING "Pts Burn";
+COLUMN "Conv Rate"                FORMAT A10        HEADING "Conv Rate";
+
+-- Formatting for Query 2 Summary
+COLUMN "Active Campaigns"         FORMAT 999999     HEADING "Campaigns";
+COLUMN "Total Claims"             FORMAT 999999     HEADING "Claims";
+COLUMN "Total Redeemed"           FORMAT 999999     HEADING "Redeemed";
+COLUMN "Total Pts Burned"         FORMAT A14        HEADING "Total Pts Used";
+COLUMN "Overall Conversion"       FORMAT A12        HEADING "Overall Conv";
 
 
 PROMPT
@@ -118,34 +135,37 @@ PROMPT Purpose: Identifies high-value and churn-risk members by inactivity durat
 PROMPT ========================================================================================
 SELECT 
     v.MemberID,
-    RPAD(v.MemberName, 18) AS "Customer Name",
+    SUBSTR(v.MemberName, 1, 16) AS "Customer Name",
     v.MembershipType AS "Tier",
-    TO_CHAR(v.LifetimeSpend, 'FM99,990.00') AS "Lifetime Spend",
+    TO_CHAR(v.LifetimeSpend, 'FM99,990.00') AS "Spend (MYR)",
     v.CurrentPoints AS "Point Balance",
-    NVL(TO_CHAR(v.LastOrderDate, 'YYYY-MM-DD'), 'NO ORDERS') AS "Last Purchase",
-    v.MonthsSinceLastActivity AS "Inactive Months",
+    NVL(TO_CHAR(v.LastOrderDate, 'YYYY-MM-DD'), 'NO ORDERS') AS "Last Active",
+    v.MonthsSinceLastActivity AS "Months",
     CASE 
         WHEN v.MonthsSinceLastActivity >= 12 THEN 'HIGH CHURN RISK (Auto-Inactive)'
         WHEN v.MonthsSinceLastActivity >= 6 THEN 'TACTICAL RE-ENGAGE'
         ELSE 'ACTIVE ENGAGED'
-    END AS "Retention Action Required"
+    END AS "Retention Strategy"
 FROM v_member_loyalty_summary v
 WHERE v.MemberStatus = 'Active'
 ORDER BY v.MonthsSinceLastActivity DESC, v.LifetimeSpend DESC;
 
--- Executive Portfolio Summary & Strategic Totals
+PROMPT
 PROMPT ----------------------------------------------------------------------------------------
-PROMPT STRATEGIC PORTFOLIO TOTALS & HEALTH BREAKDOWN:
+PROMPT STRATEGIC PORTFOLIO TOTALS and HEALTH BREAKDOWN:
+PROMPT ----------------------------------------------------------------------------------------
 SELECT 
     COUNT(*) AS "Active Members",
     COUNT(CASE WHEN MonthsSinceLastActivity >= 12 THEN 1 END) AS "High Churn (>12M)",
     COUNT(CASE WHEN MonthsSinceLastActivity BETWEEN 6 AND 11.9 THEN 1 END) AS "At-Risk (6-12M)",
     COUNT(CASE WHEN MonthsSinceLastActivity < 6 THEN 1 END) AS "Healthy (<6M)",
     TO_CHAR(SUM(LifetimeSpend), 'FM$999,990.00') AS "Total Spend",
-    TO_CHAR(AVG(LifetimeSpend), 'FM$990.00') AS "Avg Member Spend"
+    TO_CHAR(AVG(LifetimeSpend), 'FM$999,990.00') AS "Avg Spend"
 FROM v_member_loyalty_summary
 WHERE MemberStatus = 'Active';
+PROMPT
 PROMPT CONCLUSION: 1 member exceeds 12M inactivity (auto-deactivate per Rule 3). 1 member at risk requires coupon re-engagement.
+PROMPT ========================================================================================
 
 PROMPT
 PROMPT ========================================================================================
@@ -154,19 +174,36 @@ PROMPT Purpose: Measures voucher claim-to-redemption rates and point burn across
 PROMPT ========================================================================================
 SELECT 
     vu.VoucherID,
-    RPAD(vu.VoucherName, 25) AS "Voucher Name",
-    vu.VoucherType AS "Type",
-    TO_CHAR(vu.DiscountValue, 'FM90.00') AS "Value",
+    SUBSTR(vu.VoucherName, 1, 18) AS "Voucher Campaign",
+    SUBSTR(vu.VoucherType, 1, 14) AS "Category",
+    TO_CHAR(vu.DiscountValue, 'FM90.00') AS "Discount",
     vu.RequiredPoint AS "Pts Cost",
-    vu.TimesRedeemed AS "Total Claims",
-    vu.CompletedRedemptions AS "Used Claims",
-    TO_CHAR(vu.TotalPointsConsumed, 'FM999,999') AS "Total Pts Burned",
-    ROUND((vu.CompletedRedemptions / NULLIF(vu.TimesRedeemed, 0)) * 100, 2) || '%' AS "Conversion Rate"
+    vu.TimesRedeemed AS "Claims",
+    vu.CompletedRedemptions AS "Used",
+    TO_CHAR(vu.TotalPointsConsumed, 'FM999,999') AS "Pts Burned",
+    CASE 
+        WHEN vu.TimesRedeemed = 0 THEN '0%'
+        ELSE TO_CHAR(ROUND((vu.CompletedRedemptions / vu.TimesRedeemed) * 100, 2), 'FM990.00') || '%'
+    END AS "Conv Rate"
 FROM v_voucher_utilization vu
-WHERE vu.TimesRedeemed > 0
-ORDER BY vu.TotalPointsConsumed DESC;
+ORDER BY vu.TotalPointsConsumed DESC, vu.TimesRedeemed DESC;
 
--- -----------------------------------------------------------------------------
+PROMPT
+PROMPT ----------------------------------------------------------------------------------------
+PROMPT CAMPAIGN UTILIZATION and POINTS BURN TOTALS:
+PROMPT ----------------------------------------------------------------------------------------
+SELECT 
+    COUNT(*) AS "Active Campaigns",
+    SUM(TimesRedeemed) AS "Total Claims",
+    SUM(CompletedRedemptions) AS "Total Redeemed",
+    TO_CHAR(SUM(TotalPointsConsumed), 'FM999,999,990') AS "Total Pts Burned",
+    TO_CHAR(ROUND((SUM(CompletedRedemptions) / NULLIF(SUM(TimesRedeemed), 0)) * 100, 2), 'FM990.00') || '%' AS "Overall Conversion"
+FROM v_voucher_utilization;
+PROMPT
+PROMPT CONCLUSION: Cash discount vouchers yield 100% conversion vs 40% on high-point percentage vouchers. Optimize point thresholds.
+PROMPT ========================================================================================
+
+
 -- TASK 5: STORED PROCEDURES WITH EXCEPTION HANDLING (2 PROCEDURES)
 -- -----------------------------------------------------------------------------
 
