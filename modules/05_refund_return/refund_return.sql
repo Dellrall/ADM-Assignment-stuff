@@ -9,6 +9,24 @@ SET SERVEROUTPUT ON SIZE UNLIMITED;
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES, VIEWS, CUSTOM EXCEPTIONS)
 -- -----------------------------------------------------------------------------
 
+
+-- Drop existing sequences & indexes for clean re-execution
+BEGIN
+    EXECUTE IMMEDIATE 'DROP SEQUENCE seq_refund_id';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+BEGIN
+    EXECUTE IMMEDIATE 'DROP INDEX idx_refund_order_stat';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+BEGIN
+    EXECUTE IMMEDIATE 'DROP INDEX idx_returnitem_lookup';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+
 -- 1. Sequence for Refund Claims
 CREATE SEQUENCE seq_refund_id
     START WITH 1500

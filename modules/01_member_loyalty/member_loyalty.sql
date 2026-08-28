@@ -9,6 +9,24 @@ SET SERVEROUTPUT ON SIZE UNLIMITED;
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES, VIEWS, CUSTOM EXCEPTIONS)
 -- -----------------------------------------------------------------------------
 
+
+-- Drop existing sequences & indexes for clean re-execution
+BEGIN
+    EXECUTE IMMEDIATE 'DROP SEQUENCE seq_member_id';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+BEGIN
+    EXECUTE IMMEDIATE 'DROP INDEX idx_member_status_type';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+BEGIN
+    EXECUTE IMMEDIATE 'DROP INDEX idx_redemption_member_order';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+
 -- 1. Sequence for Member Management
 CREATE SEQUENCE seq_member_id
     START WITH 1000

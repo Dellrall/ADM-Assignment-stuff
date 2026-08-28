@@ -9,6 +9,24 @@ SET SERVEROUTPUT ON SIZE UNLIMITED;
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES, VIEWS, CUSTOM EXCEPTIONS)
 -- -----------------------------------------------------------------------------
 
+
+-- Drop existing sequences & indexes for clean re-execution
+BEGIN
+    EXECUTE IMMEDIATE 'DROP SEQUENCE seq_promo_id';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+BEGIN
+    EXECUTE IMMEDIATE 'DROP INDEX idx_promo_date_range';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+BEGIN
+    EXECUTE IMMEDIATE 'DROP INDEX idx_promo_item_lookup';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+
 -- 1. Sequence for Promotion Campaigns
 CREATE SEQUENCE seq_promo_id
     START WITH 300

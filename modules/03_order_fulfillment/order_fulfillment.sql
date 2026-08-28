@@ -9,6 +9,29 @@ SET SERVEROUTPUT ON SIZE UNLIMITED;
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES, VIEWS, CUSTOM EXCEPTIONS)
 -- -----------------------------------------------------------------------------
 
+
+-- Drop existing sequences & indexes for clean re-execution
+BEGIN
+    EXECUTE IMMEDIATE 'DROP SEQUENCE seq_order_id';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+BEGIN
+    EXECUTE IMMEDIATE 'DROP SEQUENCE seq_payment_id';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+BEGIN
+    EXECUTE IMMEDIATE 'DROP INDEX idx_order_date_status';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+BEGIN
+    EXECUTE IMMEDIATE 'DROP INDEX idx_payment_method_stat';
+EXCEPTION WHEN OTHERS THEN NULL;
+END;
+/
+
 -- 1. Sequences for Order Processing and Billing
 CREATE SEQUENCE seq_order_id
     START WITH 600
@@ -44,7 +67,7 @@ SELECT
     ds.CompanyName AS CourierPartner,
     d.TrackingNumber,
     pk.PickupCode,
-    NVL(SUM(od.Quantity * (od.UnitPrice - od.Discount)), 0) + NVL(d.DeliveryRemark, 0) AS OrderGrandTotal,
+    NVL(SUM(od.Quantity * (od.UnitPrice - od.Discount)), 0) + NVL(ds.DeliveryCharge, 0) AS OrderGrandTotal,
     p.PaymentMethod,
     p.PaymentStatus
 FROM CustomerOrder o
@@ -58,7 +81,7 @@ LEFT JOIN Payment p ON o.OrderID = p.OrderID
 GROUP BY 
     o.OrderID, o.OrderDate, o.OrderStatus, m.MemberID, m.Name, 
     b.BranchID, b.BranchName, d.DeliveryID, pk.PickupID, ds.CompanyName, 
-    d.TrackingNumber, pk.PickupCode, d.DeliveryRemark, p.PaymentMethod, p.PaymentStatus;
+    d.TrackingNumber, pk.PickupCode, ds.DeliveryCharge, p.PaymentMethod, p.PaymentStatus;
 
 -- 4. View 2: Third-Party Courier Performance & Revenue (Tactical View)
 CREATE OR REPLACE VIEW v_courier_delivery_efficiency AS
