@@ -288,7 +288,7 @@ CREATE TABLE DeliveryService (
     CompanyStatus       VARCHAR2(20)     DEFAULT 'Active' NOT NULL,
     CONSTRAINT pk_delivery_service PRIMARY KEY (DeliveryServiceID),
     CONSTRAINT ck_deliveryservice_email CHECK (Email IS NULL OR REGEXP_LIKE(Email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')),
-    CONSTRAINT ck_deliveryservice_phone CHECK (ContactNo IS NULL OR REGEXP_LIKE(ContactNo, '^0[0-9]{1,2}-[0-9]{7,8}$')),
+    CONSTRAINT ck_deliveryservice_phone CHECK (ContactNo IS NULL OR REGEXP_LIKE(ContactNo, '^(0[0-9]{1,2}-[0-9]{7,8}|1-[0-9]{3}-[0-9]{6})$')),
     CONSTRAINT ck_delivery_charge CHECK (DeliveryCharge >= 0),
     CONSTRAINT ck_delivery_company_status CHECK (CompanyStatus IN ('Active','Inactive'))
 );
