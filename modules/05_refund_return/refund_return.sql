@@ -150,7 +150,20 @@ CREATE OR REPLACE PROCEDURE sp_submit_refund_claim (
     v_existing_cnt NUMBER;
     v_refund_val   NUMBER;
 BEGIN
-    -- 1. Validate Item Condition (Rule 33)
+    -- 1. Validate Input Parameters & Format Constraints
+    IF p_order_id <= 0 OR p_item_id <= 0 OR p_qty <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20412, 'Validation Error: Order ID, Item ID, and Quantity must be positive integers.');
+    END IF;
+
+    IF p_method NOT IN ('Drop-off at Branch', 'Courier Pickup', 'In-Store Counter', 'Online Request') THEN
+        RAISE_APPLICATION_ERROR(-20413, 'Validation Error: ReturnMethod must be Drop-off at Branch, Courier Pickup, In-Store Counter, or Online Request.');
+    END IF;
+
+    IF p_reason IS NULL OR LENGTH(TRIM(p_reason)) < 5 THEN
+        RAISE_APPLICATION_ERROR(-20414, 'Validation Error: RefundReason must provide meaningful details (minimum 5 characters).');
+    END IF;
+
+    -- Validate Item Condition (Rule 33)
     IF p_condition NOT IN ('Damaged', 'Defective', 'Expired') THEN
         RAISE e_invalid_condition;
     END IF;

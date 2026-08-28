@@ -256,6 +256,14 @@ CREATE OR REPLACE PROCEDURE sp_adjust_damaged_stock (
     v_current_stock NUMBER;
     v_log_id        NUMBER;
 BEGIN
+    IF p_branch_id <= 0 OR p_item_id <= 0 OR p_employee_id <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20112, 'Validation Error: Branch, Item, and Employee IDs must be positive integers.');
+    END IF;
+
+    IF p_adj_type NOT IN ('Damaged', 'Expired', 'Audit Write-off', 'Audit Correction') THEN
+        RAISE_APPLICATION_ERROR(-20113, 'Validation Error: AdjustmentType must be Damaged, Expired, Audit Write-off, or Audit Correction.');
+    END IF;
+
     IF p_qty_damaged <= 0 THEN
         RAISE e_invalid_qty;
     END IF;

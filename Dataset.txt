@@ -30,15 +30,18 @@ CREATE TABLE Member (
     PhoneNo             VARCHAR2(20),
     MembershipType      VARCHAR2(20)     NOT NULL,
     MemberPoint         NUMBER(8)        DEFAULT 0 NOT NULL,
-    JoinDate             DATE             DEFAULT SYSDATE NOT NULL,
-    ExpiryDate           DATE,
+    JoinDate            DATE             DEFAULT SYSDATE NOT NULL,
+    ExpiryDate          DATE,
     MemberStatus        VARCHAR2(20)     DEFAULT 'Active' NOT NULL,
     DeliveryAddress     VARCHAR2(200),
     CONSTRAINT pk_member PRIMARY KEY (MemberID),
     CONSTRAINT uq_member_email UNIQUE (Email),
+    CONSTRAINT ck_member_email_fmt CHECK (REGEXP_LIKE(Email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')),
+    CONSTRAINT ck_member_phone_fmt CHECK (PhoneNo IS NULL OR REGEXP_LIKE(PhoneNo, '^01[0-9]-[0-9]{7,8}$')),
     CONSTRAINT ck_member_points CHECK (MemberPoint >= 0),
     CONSTRAINT ck_member_type CHECK (MembershipType IN ('Normal','VIP')),
-    CONSTRAINT ck_member_status CHECK (MemberStatus IN ('Active','Inactive'))
+    CONSTRAINT ck_member_status CHECK (MemberStatus IN ('Active','Inactive')),
+    CONSTRAINT ck_member_expiry CHECK (ExpiryDate IS NULL OR ExpiryDate >= JoinDate)
 );
 
 
@@ -53,6 +56,9 @@ CREATE TABLE Branch (
     BranchPhoneNo       VARCHAR2(20),
     BranchStatus        VARCHAR2(20)     DEFAULT 'Active' NOT NULL,
     CONSTRAINT pk_branch PRIMARY KEY (BranchID),
+    CONSTRAINT ck_branch_email_fmt CHECK (BranchEmail IS NULL OR REGEXP_LIKE(BranchEmail, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')),
+    CONSTRAINT ck_branch_phone_fmt CHECK (BranchPhoneNo IS NULL OR REGEXP_LIKE(BranchPhoneNo, '^0[0-9]{1,2}-[0-9]{7,8}$')),
+    CONSTRAINT ck_branch_postcode CHECK (PostCode IS NULL OR REGEXP_LIKE(PostCode, '^[0-9]{5}$')),
     CONSTRAINT ck_branch_status CHECK (BranchStatus IN ('Active','Inactive'))
 );
 
@@ -69,6 +75,8 @@ CREATE TABLE Employee (
     CONSTRAINT pk_employee PRIMARY KEY (EmployeeID),
     CONSTRAINT fk_employee_branch FOREIGN KEY (BranchID)
         REFERENCES Branch(BranchID),
+    CONSTRAINT ck_employee_email_fmt CHECK (Email IS NULL OR REGEXP_LIKE(Email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')),
+    CONSTRAINT ck_employee_phone_fmt CHECK (PhoneNo IS NULL OR REGEXP_LIKE(PhoneNo, '^0[0-9]{1,2}-[0-9]{7,8}$')),
     CONSTRAINT ck_employee_salary CHECK (Salary >= 0),
     CONSTRAINT ck_employee_status CHECK (EmployeeStatus IN ('Active','Inactive'))
 );
@@ -86,6 +94,7 @@ CREATE TABLE Item (
     CONSTRAINT pk_item PRIMARY KEY (ItemID),
     CONSTRAINT uq_item_barcode UNIQUE (Barcode),
     CONSTRAINT ck_item_price CHECK (Price > 0),
+    CONSTRAINT ck_item_weight CHECK (Weight IS NULL OR Weight > 0),
     CONSTRAINT ck_item_status CHECK (ItemStatus IN ('Available','Unavailable'))
 );
 
@@ -105,7 +114,7 @@ CREATE TABLE Stock (
         REFERENCES Item(ItemID),
     CONSTRAINT ck_stock_quantity CHECK (Quantity >= 0),
     CONSTRAINT ck_stock_reorder CHECK (ReorderLevel >= 0),
-    CONSTRAINT ck_stock_maximum CHECK (MaximumStock >= 0)
+    CONSTRAINT ck_stock_maximum CHECK (MaximumStock >= 0 AND MaximumStock >= ReorderLevel)
 );
 
 
@@ -137,6 +146,9 @@ CREATE TABLE Supplier (
     PostCode            VARCHAR2(10),
     SupplierStatus      VARCHAR2(20)     DEFAULT 'Active' NOT NULL,
     CONSTRAINT pk_supplier PRIMARY KEY (SupplierID),
+    CONSTRAINT ck_supplier_email_fmt CHECK (Email IS NULL OR REGEXP_LIKE(Email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')),
+    CONSTRAINT ck_supplier_phone_fmt CHECK (PhoneNo IS NULL OR REGEXP_LIKE(PhoneNo, '^0[0-9]{1,2}-[0-9]{7,8}$')),
+    CONSTRAINT ck_supplier_postcode CHECK (PostCode IS NULL OR REGEXP_LIKE(PostCode, '^[0-9]{5}$')),
     CONSTRAINT ck_supplier_status CHECK (SupplierStatus IN ('Active','Inactive'))
 );
 
@@ -183,7 +195,9 @@ CREATE TABLE StockLog (
     CONSTRAINT fk_stocklog_item FOREIGN KEY (ItemID)
         REFERENCES Item(ItemID),
     CONSTRAINT fk_stocklog_employee FOREIGN KEY (EmployeeID)
-        REFERENCES Employee(EmployeeID)
+        REFERENCES Employee(EmployeeID),
+    CONSTRAINT ck_stocklog_type CHECK (AdjustmentType IN ('Restock - PO Delivery','Damaged','Expired','Audit Write-off','Audit Correction','Initial Stock','Return to Stock')),
+    CONSTRAINT ck_stocklog_qty CHECK (QuantityChanged <> 0)
 );
 
 
@@ -220,6 +234,7 @@ CREATE TABLE Voucher (
     ExpiryDate          DATE             NOT NULL,
     VoucherStatus       VARCHAR2(20)     DEFAULT 'Active' NOT NULL,
     CONSTRAINT pk_voucher PRIMARY KEY (VoucherID),
+    CONSTRAINT ck_voucher_type CHECK (VoucherType IN ('Cash Discount','Free Delivery','Percentage Discount','Special Promo')),
     CONSTRAINT ck_voucher_discount CHECK (DiscountValue >= 0),
     CONSTRAINT ck_voucher_spend CHECK (MinimumSpend >= 0),
     CONSTRAINT ck_voucher_point CHECK (RequiredPoint >= 0),
@@ -240,6 +255,7 @@ CREATE TABLE CustomerOrder (
         REFERENCES Member(MemberID),
     CONSTRAINT fk_order_branch FOREIGN KEY (BranchID)
         REFERENCES Branch(BranchID),
+    CONSTRAINT ck_order_time CHECK (OrderTime IS NULL OR REGEXP_LIKE(OrderTime, '^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$')),
     CONSTRAINT ck_order_status CHECK (OrderStatus IN ('Pending','Completed','Cancelled'))
 );
 
@@ -258,7 +274,7 @@ CREATE TABLE OrderDetail (
         REFERENCES CustomerOrder(OrderID),
     CONSTRAINT ck_orderdetail_quantity CHECK (Quantity > 0),
     CONSTRAINT ck_orderdetail_price CHECK (UnitPrice > 0),
-    CONSTRAINT ck_orderdetail_discount CHECK (Discount >= 0),
+    CONSTRAINT ck_orderdetail_discount CHECK (Discount >= 0 AND Discount <= UnitPrice),
     CONSTRAINT ck_orderdetail_status CHECK (LineStatus IN ('Active','Cancelled','Returned'))
 );
 
@@ -271,6 +287,8 @@ CREATE TABLE DeliveryService (
     DeliveryCharge      NUMBER(10,2)     DEFAULT 0 NOT NULL,
     CompanyStatus       VARCHAR2(20)     DEFAULT 'Active' NOT NULL,
     CONSTRAINT pk_delivery_service PRIMARY KEY (DeliveryServiceID),
+    CONSTRAINT ck_deliveryservice_email CHECK (Email IS NULL OR REGEXP_LIKE(Email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')),
+    CONSTRAINT ck_deliveryservice_phone CHECK (ContactNo IS NULL OR REGEXP_LIKE(ContactNo, '^0[0-9]{1,2}-[0-9]{7,8}$')),
     CONSTRAINT ck_delivery_charge CHECK (DeliveryCharge >= 0),
     CONSTRAINT ck_delivery_company_status CHECK (CompanyStatus IN ('Active','Inactive'))
 );
@@ -292,6 +310,7 @@ CREATE TABLE Delivery (
         REFERENCES CustomerOrder(OrderID),
     CONSTRAINT uq_delivery_tracking UNIQUE (TrackingNumber),
     CONSTRAINT uq_delivery_order UNIQUE (OrderID),
+    CONSTRAINT ck_delivery_time CHECK (DeliveryTime IS NULL OR REGEXP_LIKE(DeliveryTime, '^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$')),
     CONSTRAINT ck_delivery_status CHECK (DeliveryStatus IN ('Pending','In Transit','Delivered','Cancelled'))
 );
 
@@ -310,6 +329,8 @@ CREATE TABLE Pickup (
         REFERENCES CustomerOrder(OrderID),
     CONSTRAINT uq_pickup_code UNIQUE (PickupCode),
     CONSTRAINT uq_pickup_order UNIQUE (OrderID),
+    CONSTRAINT ck_pickup_time CHECK (PickupTime IS NULL OR REGEXP_LIKE(PickupTime, '^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$')),
+    CONSTRAINT ck_pickup_code_fmt CHECK (PickupCode IS NULL OR REGEXP_LIKE(PickupCode, '^[A-Za-z0-9]{6,12}$')),
     CONSTRAINT ck_pickup_status CHECK (PickupStatus IN ('Pending','Ready','Collected','Cancelled'))
 );
 
@@ -367,7 +388,8 @@ CREATE TABLE Refund (
     CONSTRAINT fk_refund_order FOREIGN KEY (OrderID)
         REFERENCES CustomerOrder(OrderID),
     CONSTRAINT ck_refund_amount CHECK (RefundAmount >= 0),
-    CONSTRAINT ck_refund_status CHECK (RefundStatus IN ('Pending','Approved','Rejected','Completed'))
+    CONSTRAINT ck_refund_status CHECK (RefundStatus IN ('Pending','Approved','Rejected','Completed')),
+    CONSTRAINT ck_refund_method CHECK (ReturnMethod IN ('Drop-off at Branch','Courier Pickup','In-Store Counter','Online Request'))
 );
 
 
@@ -383,10 +405,8 @@ CREATE TABLE ReturnItem (
     CONSTRAINT fk_returnitem_item FOREIGN KEY (ItemID)
         REFERENCES Item(ItemID),
     CONSTRAINT ck_returnitem_quantity CHECK (Quantity > 0),
-    CONSTRAINT ck_returnitem_condition CHECK
-        (ItemCondition IN ('New','Good','Damaged','Defective'))
+    CONSTRAINT ck_returnitem_condition CHECK (ItemCondition IN ('New','Good','Damaged','Defective','Expired'))
 );
-
 
 
 -- Member

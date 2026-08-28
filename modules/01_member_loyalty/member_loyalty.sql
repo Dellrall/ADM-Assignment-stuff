@@ -135,9 +135,17 @@ CREATE OR REPLACE PROCEDURE sp_register_or_renew_member (
     v_count NUMBER;
     v_expiry DATE := NULL;
 BEGIN
-    -- Input Validation
-    IF INSTR(p_email, '@') = 0 OR INSTR(p_email, '.') = 0 THEN
+    -- Input Validation & Format Constraints
+    IF p_name IS NULL OR LENGTH(TRIM(p_name)) < 2 THEN
+        RAISE_APPLICATION_ERROR(-20012, 'Validation Error: Member Name must be at least 2 characters.');
+    END IF;
+
+    IF NOT REGEXP_LIKE(p_email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$') THEN
         RAISE e_invalid_email;
+    END IF;
+
+    IF p_phone IS NOT NULL AND NOT REGEXP_LIKE(p_phone, '^01[0-9]-[0-9]{7,8}$') THEN
+        RAISE_APPLICATION_ERROR(-20013, 'Validation Error: Phone format must match 01X-XXXXXXX (e.g. 012-3456789).');
     END IF;
 
     IF p_type NOT IN ('Normal', 'VIP') THEN

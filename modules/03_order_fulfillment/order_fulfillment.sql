@@ -230,13 +230,21 @@ CREATE OR REPLACE PROCEDURE sp_settle_order_payment (
     v_payment_id   NUMBER;
     v_pts_earned   NUMBER;
 BEGIN
-    -- 1. Validate Payment Method
+    -- 1. Validate Input Parameters & Format Constraints
+    IF p_order_id <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20212, 'Validation Error: Order ID must be a positive integer.');
+    END IF;
+
     IF p_payment_method NOT IN ('Cash', 'Card', 'E-Wallet', 'Online Banking') THEN
         RAISE e_invalid_method;
     END IF;
 
     IF p_amount_paid <= 0 THEN
         RAISE e_invalid_amount;
+    END IF;
+
+    IF p_transaction_no IS NULL OR LENGTH(TRIM(p_transaction_no)) < 4 THEN
+        RAISE_APPLICATION_ERROR(-20213, 'Validation Error: Transaction Number cannot be empty and must be at least 4 characters.');
     END IF;
 
     -- 2. Validate Order Status
