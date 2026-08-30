@@ -1,75 +1,83 @@
 # 88 Speedmart System (Oracle PL/SQL)
 **Course:** BMCS3183 Advanced Database Management (TAR UMT)  
-**Selected Additional Module:** Module 3 — Refund & Return Management  
+**System Domain:** Omnichannel Convenience Store Management  
 
 ---
 
-## Project Structure
+## 📁 Modular Presentation Architecture
+
+Each team member has a dedicated, self-contained subfolder containing their 4 individual presentation showcase scripts (**Queries**, **Procedures**, **Triggers**, and **Reports**) along with their **Task 8 Extra Efforts** (Sequences, Indexes, Views, PRAGMA Exceptions).
 
 ```
 .
-├── AssignmentInstruction.pdf              # Assignment brief & rubrics
-├── BusinessLogic.pdf                      # Task 1 (ERD & business rules) + Task 2 (DDL)
-├── Dataset.txt                            # Task 2 (DDL) + Task 3 (2,816 sample INSERT records)
-├── ExtraModule.md                         # Group selection record (Refund/Return)
-├── run_all_modules.sql                    # Master runner script
-├── guides/
-│   ├── Presentation_and_Grading_Guide.pdf # Presentation & live demo guide (PDF)
-│   ├── PRESENTATION_AND_GRADING_GUIDE.md  # Presentation & live demo guide (Markdown)
-│   ├── Report_Writing_and_Submission_Guide.pdf # Report formatting & checklist (PDF)
-│   └── Report_Writing_and_Submission_Guide.md  # Report formatting & checklist (Markdown)
+├── Dataset.txt                               # Tasks 2 & 3 (DDL + 2,816 Sample Data Records)
+├── BusinessLogic.pdf                         # Task 1 (ERD & Business Rules)
+├── AssignmentInstruction.pdf                 # Assignment Brief & Rubrics
 └── modules/
-    ├── 01_member_loyalty/                 # Member 1: Loyalty, Points & Vouchers
-    │   ├── member_loyalty.sql             # SQL & PL/SQL implementation
-    │   └── member_loyalty_mental_model.md # Module documentation
-    ├── 02_inventory_purchasing/           # Member 2: Stock, Batches & Suppliers
-    │   ├── inventory_purchasing.sql       # SQL & PL/SQL implementation
-    │   └── inventory_purchasing_mental_model.md
-    ├── 03_order_fulfillment/              # Member 3: Orders, Payments & Fulfillment
-    │   ├── order_fulfillment.sql          # SQL & PL/SQL implementation
-    │   └── order_fulfillment_mental_model.md
-    ├── 04_promotions/                     # Member 4: Promotions & Discounts
-    │   ├── promotions.sql                 # SQL & PL/SQL implementation
-    │   └── promotions_mental_model.md
-    └── 05_refund_return/                  # Member 5: Refund & Return Management (Extra)
-        ├── refund_return.sql              # SQL & PL/SQL implementation
-        └── refund_return_mental_model.md
+    ├── 01_member_loyalty/                    # Member 1: Loyalty, Points & Vouchers
+    │   ├── 01_queries.sql                    # Task 4 & 8: Churn Risk & Voucher ROI
+    │   ├── 02_procedures.sql                 # Task 5 & 8: Member Registration & Point Redemption
+    │   ├── 03_triggers.sql                   # Task 6: Points Balance & VIP Expiry Guards
+    │   ├── 04_reports.sql                    # Task 7: Annual Statement & Voucher Summary
+    │   └── README.md                         # Presentation & Verification Guide
+    │
+    ├── 02_inventory_purchasing/              # Member 2: Stock, Batches & Procurement
+    │   ├── 01_queries.sql                    # Task 4 & 8: Reorder Deficit & Spoilage Risk
+    │   ├── 02_procedures.sql                 # Task 5 & 8: PO Intake & Damaged Write-offs
+    │   ├── 03_triggers.sql                   # Task 6: Positive PO Cost & Max Stock Guards
+    │   ├── 04_reports.sql                    # Task 7: Branch Stock Audit & Supplier Dossier
+    │   └── README.md                         # Presentation & Verification Guide
+    │
+    ├── 03_order_fulfillment/                 # Member 3: Orders, Payments & Dispatches
+    │   ├── 01_queries.sql                    # Task 4 & 8: Omnichannel GMV & Courier SLA
+    │   ├── 02_procedures.sql                 # Task 5 & 8: Pickup Booking & Payment Settlement
+    │   ├── 03_triggers.sql                   # Task 6: Exclusive Pickup/Delivery & Paid Guard
+    │   ├── 04_reports.sql                    # Task 7: Official Tax Invoice & Daily Manifest
+    │   └── README.md                         # Presentation & Verification Guide
+    │
+    ├── 04_promotions/                        # Member 4: Promotions & Discounts
+    │   ├── 01_queries.sql                    # Task 4 & 8: Promotion ROI & Markdown Depth
+    │   ├── 02_procedures.sql                 # Task 5 & 8: Campaign Launch & Cart Re-pricing
+    │   ├── 03_triggers.sql                   # Task 6: Date Chronology & Discount Ceiling Guards
+    │   ├── 04_reports.sql                    # Task 7: Active Promo Catalog & Financial Audit
+    │   └── README.md                         # Presentation & Verification Guide
+    │
+    └── 05_branch_operations/                 # Member 5: Branch Network & Staffing
+        ├── 01_queries.sql                    # Task 4 & 8: Labor Efficiency & Staff Audit Logs
+        ├── 02_procedures.sql                 # Task 5 & 8: Branch Registration & Staff Promotion
+        ├── 03_triggers.sql                   # Task 6: Minimum Wage (RM1500) & Branch Deactivation
+        ├── 04_reports.sql                    # Task 7: Staffing Payroll Dossier & Regional Summary
+        └── README.md                         # Presentation & Verification Guide
 ```
 
 ---
 
-## Guides
+## 👥 Team Member Task Allocations
 
-- **Presentation Guide:** [PDF](guides/Presentation_and_Grading_Guide.pdf) | [Markdown](guides/PRESENTATION_AND_GRADING_GUIDE.md) — Live demo script, marks pointers, and Q&A defense for each member.
-- **Report Writing Guide:** [PDF](guides/Report_Writing_and_Submission_Guide.pdf) | [Markdown](guides/Report_Writing_and_Submission_Guide.md) — Formatting rules (11pt Times New Roman, 1.0 spacing), chapter outline, and screenshot checklist.
-
----
-
-## Team Module Allocations
-
-| Member | Assigned Module | SQL Script | Documentation |
-| :---: | :--- | :--- | :--- |
-| **Member 1** | Module 1: Member & Loyalty Management | [`member_loyalty.sql`](modules/01_member_loyalty/member_loyalty.sql) | [`Mental Model`](modules/01_member_loyalty/member_loyalty_mental_model.md) |
-| **Member 2** | Module 2: Inventory & Purchasing Management | [`inventory_purchasing.sql`](modules/02_inventory_purchasing/inventory_purchasing.sql) | [`Mental Model`](modules/02_inventory_purchasing/inventory_purchasing_mental_model.md) |
-| **Member 3** | Module 3: Order, Payment & Fulfillment | [`order_fulfillment.sql`](modules/03_order_fulfillment/order_fulfillment.sql) | [`Mental Model`](modules/03_order_fulfillment/order_fulfillment_mental_model.md) |
-| **Member 4** | Module 4: Promotion & Marketing Management | [`promotions.sql`](modules/04_promotions/promotions.sql) | [`Mental Model`](modules/04_promotions/promotions_mental_model.md) |
-| **Member 5** | Module 5: Refund & Return Management (Extra) | [`refund_return.sql`](modules/05_refund_return/refund_return.sql) | [`Mental Model`](modules/05_refund_return/refund_return_mental_model.md) |
+| Member | Assigned Domain | Task 4 Queries | Task 5 Procedures | Task 6 Triggers | Task 7 Nested Reports |
+| :---: | :--- | :--- | :--- | :--- | :--- |
+| **Member 1** | **Member & Loyalty** | • Churn Risk View<br>• Voucher Burn ROI | • Register/Renew VIP<br>• Point Redemption | • Inactive Point Guard<br>• VIP 1-Yr Expiry | • Member Annual Statement<br>• Voucher Campaign Summary |
+| **Member 2** | **Inventory & Stock** | • Reorder Deficit View<br>• Batch Spoilage Risk | • PO Intake & MERGE<br>• Damaged Write-off | • Positive PO Cost<br>• Max Stock Ceiling | • Branch Stock Audit<br>• Supplier Procurement Dossier |
+| **Member 3** | **Order & Fulfillment** | • Omnichannel GMV<br>• Courier SLA Audit | • Pickup Booking & Code<br>• Settle Payment & Pts | • Exclusive Fulfillment<br>• Paid Payment Guard | • Official Tax Invoice<br>• Daily Branch Manifest |
+| **Member 4** | **Promotion & Marketing** | • Campaign Margin ROI<br>• Markdown Depth | • Launch Campaign<br>• Cart Auto-Repricing | • Promo Date Sanity<br>• Base Price Ceiling | • Active Promo Catalog<br>• Promotion Sales Impact |
+| **Member 5** | **Branch & Staffing** | • Labor Efficiency Ratio<br>• Staff Audit Workload | • Register Branch<br>• Staff Promotion/Transfer | • Min Wage (RM1500)<br>• Deactivation Guard | • Branch Payroll Dossier<br>• Regional Branch Summary |
 
 ---
 
-## How to Run in Oracle (SQL Developer / SQL*Plus)
+## 🚀 Live Demo Presentation Execution
 
-### 1. Build Entire Database & All Modules
+To demonstrate in **Oracle SQL Developer** or **SQL\*Plus**:
+
+### 1. Initial Setup (One-time)
+Run `@Dataset.txt` to create the schema and populate 2,816 sample records.
+
+### 2. Individual Member Presentation
+Each member runs their 4 standalone files in sequence:
+
 ```sql
--- 1. Create tables and insert sample records (Tasks 2 & 3)
-@Dataset.txt
-
--- 2. Compile all procedures, triggers, views, indexes, sequences (Tasks 4–8)
-@run_all_modules.sql
-```
-
-### 2. Run a Single Module
-```sql
-SET SERVEROUTPUT ON SIZE UNLIMITED;
-@modules/01_member_loyalty/member_loyalty.sql
+-- Example for Member 1:
+@modules/01_member_loyalty/01_queries.sql
+@modules/01_member_loyalty/02_procedures.sql
+@modules/01_member_loyalty/03_triggers.sql
+@modules/01_member_loyalty/04_reports.sql
 ```
