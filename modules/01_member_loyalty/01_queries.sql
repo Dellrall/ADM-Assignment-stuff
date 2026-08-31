@@ -109,6 +109,7 @@ FROM MemberOrderSummary;
 COLUMN MemberID FORMAT 9999 HEADING "Mem ID"
 COLUMN MemberName FORMAT A20 HEADING "Member Name"
 COLUMN MembershipType FORMAT A6 HEADING "Tier"
+COLUMN MemberStatus FORMAT A8 HEADING "Status"
 COLUMN CurrentPoints FORMAT 999,990 HEADING "Points"
 COLUMN TotalOrders FORMAT 999 HEADING "Orders"
 COLUMN LastActiveDate FORMAT A10 HEADING "Last Active"
@@ -145,9 +146,9 @@ SELECT
     v.MinimumSpend,
     v.RequiredPoint,
     COUNT(pr.PointRedemptionID) AS TotalRedemptions,
-    SUM(pr.PointUsed) AS TotalPointsBurned,
+    NVL(SUM(pr.PointUsed), 0) AS TotalPointsBurned,
     NVL(SUM(p.AmountPaid), 0) AS TotalRevenueGenerated,
-    ROUND(AVG(p.AmountPaid), 2) AS AvgBasketSize,
+    NVL(ROUND(AVG(p.AmountPaid), 2), 0.00) AS AvgBasketSize,
     ROUND(RATIO_TO_REPORT(NVL(SUM(p.AmountPaid), 0)) OVER () * 100, 2) AS PctRevenueContribution
 FROM Voucher v
 LEFT JOIN PointRedemption pr ON v.VoucherID = pr.VoucherID AND pr.RedemptionStatus = 'Completed'
@@ -160,8 +161,8 @@ GROUP BY
 -- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 2]
 -- Format and Execute Query 2
 COLUMN VoucherID FORMAT 999 HEADING "Vch ID"
-COLUMN VoucherName FORMAT A25 HEADING "Voucher Campaign"
-COLUMN VoucherType FORMAT A12 HEADING "Type"
+COLUMN VoucherName FORMAT A20 HEADING "Voucher Campaign"
+COLUMN VoucherType FORMAT A20 HEADING "Voucher Type"
 COLUMN DiscountValue FORMAT $990.00 HEADING "Discount"
 COLUMN MinimumSpend FORMAT $990.00 HEADING "Min Spend"
 COLUMN RequiredPoint FORMAT 9,990 HEADING "Req Pts"
