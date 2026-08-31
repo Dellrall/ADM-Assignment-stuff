@@ -98,7 +98,7 @@ BEGIN
             AdjustmentDate, Remarks, BranchID, ItemID, EmployeeID
         ) VALUES (
             seq_stock_log_id.NEXTVAL,
-            'Restock',
+            'Restock - PO Delivery',
             item_rec.Quantity,
             SYSDATE,
             'Received physical delivery from PO #' || p_po_id,
@@ -206,7 +206,12 @@ BEGIN
         AdjustmentDate, Remarks, BranchID, ItemID, EmployeeID
     ) VALUES (
         seq_stock_log_id.NEXTVAL,
-        INITCAP(TRIM(p_adj_type)),
+        CASE UPPER(TRIM(p_adj_type))
+            WHEN 'DAMAGED' THEN 'Damaged'
+            WHEN 'EXPIRED' THEN 'Expired'
+            WHEN 'WRITE-OFF' THEN 'Audit Write-off'
+            ELSE INITCAP(TRIM(p_adj_type))
+        END,
         -p_qty_to_deduct,
         SYSDATE,
         TRIM(p_remarks),
@@ -261,15 +266,19 @@ DECLARE
     v_items_rec  NUMBER;
     v_msg        VARCHAR2(400);
 BEGIN
-    -- Setup temporary test Purchase Order
+    -- Setup temporary test Purchase Order and cleanup prior test runs
+    DELETE FROM StockLog WHERE Remarks LIKE '%PO #999902%';
+    DELETE FROM StockBatch WHERE BatchID >= 1000;
     DELETE FROM PurchaseOrderItem WHERE PurchaseOrderID = v_test_po_id;
     DELETE FROM PurchaseOrder WHERE PurchaseOrderID = v_test_po_id;
+    COMMIT;
 
     INSERT INTO PurchaseOrder (PurchaseOrderID, OrderDate, Status, SupplierID)
     VALUES (v_test_po_id, SYSDATE, 'Approved', 1);
 
     INSERT INTO PurchaseOrderItem (PurchaseOrderID, ItemID, Quantity, CostPrice)
     VALUES (v_test_po_id, 1, 10, 18.00);
+    COMMIT;
 
     -- Test 1: Successful Purchase Order Intake at Branch 1 by Employee 1
     sp_receive_purchase_order(
