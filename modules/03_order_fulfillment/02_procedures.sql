@@ -293,21 +293,71 @@ BEGIN
     );
     DBMS_OUTPUT.PUT_LINE(v_msg);
 
-    -- Test 2: Settle Payment for the newly created order
-    DECLARE
-        v_pay_id NUMBER;
-        v_pts    NUMBER;
+    -- Test 2: Intentional Invalid Pickup Date in the Past (Demonstrating Exception)
+    BEGIN
+        sp_create_pickup_order(
+            p_member_id   => 1,
+            p_branch_id   => 1,
+            p_pickup_date => SYSDATE - 5, -- Past date rejected by Rule 26!
+            p_order_id    => v_ord_id,
+            p_pickup_code => v_code,
+            p_status_msg  => v_msg
+        );
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Caught Expected Exception: ' || SQLERRM);
+    END;
+END;
+/
+
+PROMPT
+PROMPT ============================================================================
+PROMPT >>> VERIFYING PROCEDURE 2: sp_settle_order_payment
+PROMPT ============================================================================
+
+DECLARE
+    v_test_ord_id NUMBER;
+    v_code        VARCHAR2(20);
+    v_pay_id      NUMBER;
+    v_pts         NUMBER;
+    v_msg         VARCHAR2(400);
+BEGIN
+    -- Setup temporary pending pickup order to settle
+    sp_create_pickup_order(
+        p_member_id   => 1,
+        p_branch_id   => 1,
+        p_pickup_date => SYSDATE + 2,
+        p_order_id    => v_test_ord_id,
+        p_pickup_code => v_code,
+        p_status_msg  => v_msg
+    );
+
+    -- Test 1: Successful Payment Settlement for Pending Order
+    sp_settle_order_payment(
+        p_order_id       => v_test_ord_id,
+        p_payment_method => 'E-Wallet',
+        p_amount_paid    => 55.50,
+        p_transaction_no => 'TXN-EW-DEMO-' || v_test_ord_id,
+        p_payment_id     => v_pay_id,
+        p_points_awarded => v_pts,
+        p_status_msg     => v_msg
+    );
+    DBMS_OUTPUT.PUT_LINE(v_msg);
+
+    -- Test 2: Intentional Duplicate Payment on Already Completed Order (Demonstrating Exception)
     BEGIN
         sp_settle_order_payment(
-            p_order_id       => v_ord_id,
-            p_payment_method => 'E-Wallet',
+            p_order_id       => v_test_ord_id,
+            p_payment_method => 'Cash',
             p_amount_paid    => 55.50,
-            p_transaction_no => 'TXN-EW-DEMO-' || v_ord_id,
+            p_transaction_no => 'TXN-DUP-' || v_test_ord_id,
             p_payment_id     => v_pay_id,
             p_points_awarded => v_pts,
             p_status_msg     => v_msg
         );
-        DBMS_OUTPUT.PUT_LINE(v_msg);
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Caught Expected Exception: ' || SQLERRM);
     END;
 END;
 /

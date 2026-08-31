@@ -311,3 +311,63 @@ BEGIN
     END;
 END;
 /
+
+PROMPT
+PROMPT ============================================================================
+PROMPT >>> VERIFYING PROCEDURE 2: sp_process_point_redemption
+PROMPT ============================================================================
+
+DECLARE
+    v_test_vch_id  NUMBER := 999901;
+    v_test_ord_id  NUMBER := 999901;
+    v_red_id       NUMBER;
+    v_disc         NUMBER;
+BEGIN
+    -- Setup temporary test voucher and test order
+    DELETE FROM PointRedemption WHERE VoucherID = v_test_vch_id OR OrderID = v_test_ord_id;
+    DELETE FROM OrderDetail WHERE OrderID = v_test_ord_id;
+    DELETE FROM CustomerOrder WHERE OrderID = v_test_ord_id;
+    DELETE FROM Voucher WHERE VoucherID = v_test_vch_id;
+
+    INSERT INTO Voucher (VoucherID, VoucherName, VoucherType, DiscountValue, MinimumSpend, RequiredPoint, StartDate, ExpiryDate, VoucherStatus)
+    VALUES (v_test_vch_id, 'Test RM5 Off', 'Cash Discount', 5.00, 30.00, 50, SYSDATE, SYSDATE + 30, 'Active');
+
+    INSERT INTO CustomerOrder (OrderID, OrderDate, OrderTime, OrderStatus, MemberID, BranchID)
+    VALUES (v_test_ord_id, SYSDATE, '10:00', 'Pending', 1, 1);
+
+    INSERT INTO OrderDetail (ItemID, OrderID, Quantity, UnitPrice, Discount, LineStatus)
+    VALUES (1, v_test_ord_id, 2, 25.90, 0.00, 'Active');
+
+    -- Ensure Member 1 has sufficient points for test
+    UPDATE Member SET MemberPoint = 500 WHERE MemberID = 1;
+    COMMIT;
+
+    -- Test 1: Successful Point Redemption
+    sp_process_point_redemption(
+        p_member_id        => 1,
+        p_voucher_id       => v_test_vch_id,
+        p_order_id         => v_test_ord_id,
+        p_redemption_id    => v_red_id,
+        p_discount_applied => v_disc
+    );
+    DBMS_OUTPUT.PUT_LINE('SUCCESS: Point Redemption #' || v_red_id || ' processed (Discount Applied: RM ' || TO_CHAR(v_disc, 'FM990.00') || ').');
+
+    -- Test 2: Intentional Insufficient Points (Demonstrating Exception)
+    BEGIN
+        -- Update voucher to require massive points
+        UPDATE Voucher SET RequiredPoint = 999999 WHERE VoucherID = v_test_vch_id;
+        COMMIT;
+
+        sp_process_point_redemption(
+            p_member_id        => 1,
+            p_voucher_id       => v_test_vch_id,
+            p_order_id         => v_test_ord_id,
+            p_redemption_id    => v_red_id,
+            p_discount_applied => v_disc
+        );
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Caught Expected Exception: ' || SQLERRM);
+    END;
+END;
+/

@@ -253,6 +253,52 @@ END sp_adjust_damaged_stock;
 -- ----------------------------------------------------------------------------
 PROMPT
 PROMPT ============================================================================
+PROMPT >>> VERIFYING PROCEDURE 1: sp_receive_purchase_order
+PROMPT ============================================================================
+
+DECLARE
+    v_test_po_id NUMBER := 999902;
+    v_items_rec  NUMBER;
+    v_msg        VARCHAR2(400);
+BEGIN
+    -- Setup temporary test Purchase Order
+    DELETE FROM PurchaseOrderItem WHERE PurchaseOrderID = v_test_po_id;
+    DELETE FROM PurchaseOrder WHERE PurchaseOrderID = v_test_po_id;
+
+    INSERT INTO PurchaseOrder (PurchaseOrderID, OrderDate, Status, SupplierID)
+    VALUES (v_test_po_id, SYSDATE, 'Approved', 1);
+
+    INSERT INTO PurchaseOrderItem (PurchaseOrderID, ItemID, Quantity, CostPrice)
+    VALUES (v_test_po_id, 1, 10, 18.00);
+
+    -- Test 1: Successful Purchase Order Intake at Branch 1 by Employee 1
+    sp_receive_purchase_order(
+        p_po_id               => v_test_po_id,
+        p_receiving_branch_id => 1,
+        p_employee_id         => 1,
+        p_items_received      => v_items_rec,
+        p_status_msg          => v_msg
+    );
+    DBMS_OUTPUT.PUT_LINE(v_msg);
+
+    -- Test 2: Intentional Intake on Already Received PO (Demonstrating Exception)
+    BEGIN
+        sp_receive_purchase_order(
+            p_po_id               => v_test_po_id,
+            p_receiving_branch_id => 1,
+            p_employee_id         => 1,
+            p_items_received      => v_items_rec,
+            p_status_msg          => v_msg
+        );
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Caught Expected Exception: ' || SQLERRM);
+    END;
+END;
+/
+
+PROMPT
+PROMPT ============================================================================
 PROMPT >>> VERIFYING PROCEDURE 2: sp_adjust_damaged_stock
 PROMPT ============================================================================
 

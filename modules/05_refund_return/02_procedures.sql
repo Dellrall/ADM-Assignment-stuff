@@ -318,3 +318,67 @@ BEGIN
     END;
 END;
 /
+
+PROMPT
+PROMPT ============================================================================
+PROMPT >>> VERIFYING PROCEDURE 2: sp_adjudicate_refund_claim
+============================================================================
+
+DECLARE
+    v_test_order_id NUMBER := 999906;
+    v_ref_id        NUMBER;
+    v_amt           NUMBER;
+    v_msg           VARCHAR2(400);
+BEGIN
+    -- Setup temporary test order and pending refund claim
+    DELETE FROM ReturnItem WHERE RefundID IN (SELECT RefundID FROM Refund WHERE OrderID = v_test_order_id);
+    DELETE FROM Refund WHERE OrderID = v_test_order_id;
+    DELETE FROM Payment WHERE OrderID = v_test_order_id;
+    DELETE FROM OrderDetail WHERE OrderID = v_test_order_id;
+    DELETE FROM CustomerOrder WHERE OrderID = v_test_order_id;
+
+    INSERT INTO CustomerOrder (OrderID, OrderDate, OrderTime, OrderStatus, MemberID, BranchID)
+    VALUES (v_test_order_id, SYSDATE, '15:00', 'Completed', 1, 1);
+
+    INSERT INTO OrderDetail (ItemID, OrderID, Quantity, UnitPrice, Discount, LineStatus)
+    VALUES (1, v_test_order_id, 1, 25.90, 0.00, 'Active');
+
+    INSERT INTO Payment (PaymentID, PaymentMethod, PaymentDate, AmountPaid, TransactionNo, PaymentStatus, OrderID)
+    VALUES (999906, 'Online Banking', SYSDATE, 25.90, 'TXN-TEST-999906', 'Paid', v_test_order_id);
+
+    sp_submit_refund_claim(
+        p_order_id      => v_test_order_id,
+        p_reason        => 'Damaged outer packaging',
+        p_return_method => 'Drop-off at Branch',
+        p_photo_url     => 'http://proof.speedmart88.my/proof02.jpg',
+        p_item_id       => 1,
+        p_quantity      => 1,
+        p_condition     => 'Damaged',
+        p_refund_id     => v_ref_id,
+        p_claim_amount  => v_amt,
+        p_status_msg    => v_msg
+    );
+
+    -- Test 1: Successful Manager Adjudication (Approval)
+    sp_adjudicate_refund_claim(
+        p_refund_id       => v_ref_id,
+        p_decision        => 'APPROVED',
+        p_manager_remarks => 'Verified physical damage at branch counter. Approved refund.',
+        p_status_msg      => v_msg
+    );
+    DBMS_OUTPUT.PUT_LINE(v_msg);
+
+    -- Test 2: Intentional Re-adjudication of Already Processed Claim (Demonstrating Exception)
+    BEGIN
+        sp_adjudicate_refund_claim(
+            p_refund_id       => v_ref_id,
+            p_decision        => 'REJECTED',
+            p_manager_remarks => 'Attempting duplicate adjudication',
+            p_status_msg      => v_msg
+        );
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Caught Expected Exception: ' || SQLERRM);
+    END;
+END;
+/

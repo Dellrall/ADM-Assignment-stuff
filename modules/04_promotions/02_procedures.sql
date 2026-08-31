@@ -258,3 +258,52 @@ BEGIN
     END;
 END;
 /
+
+PROMPT
+PROMPT ============================================================================
+PROMPT >>> VERIFYING PROCEDURE 2: sp_apply_order_promo_discount
+PROMPT ============================================================================
+
+DECLARE
+    v_test_ord_id NUMBER := 999904;
+    v_updated     NUMBER;
+    v_savings     NUMBER;
+    v_msg         VARCHAR2(400);
+BEGIN
+    -- Setup temporary test pending order with Item 1 (which has active promotion from Procedure 1)
+    DELETE FROM OrderDetail WHERE OrderID = v_test_ord_id;
+    DELETE FROM CustomerOrder WHERE OrderID = v_test_ord_id;
+
+    INSERT INTO CustomerOrder (OrderID, OrderDate, OrderTime, OrderStatus, MemberID, BranchID)
+    VALUES (v_test_ord_id, SYSDATE, '14:00', 'Pending', 1, 1);
+
+    INSERT INTO OrderDetail (ItemID, OrderID, Quantity, UnitPrice, Discount, LineStatus)
+    VALUES (1, v_test_ord_id, 3, 25.90, 0.00, 'Active');
+    COMMIT;
+
+    -- Test 1: Successful Order Promotion Discount Application
+    sp_apply_order_promo_discount(
+        p_order_id          => v_test_ord_id,
+        p_discounts_updated => v_updated,
+        p_total_savings     => v_savings,
+        p_status_msg        => v_msg
+    );
+    DBMS_OUTPUT.PUT_LINE(v_msg);
+
+    -- Test 2: Intentional Repricing on Already Completed Order (Demonstrating Exception)
+    BEGIN
+        UPDATE CustomerOrder SET OrderStatus = 'Completed' WHERE OrderID = v_test_ord_id;
+        COMMIT;
+
+        sp_apply_order_promo_discount(
+            p_order_id          => v_test_ord_id,
+            p_discounts_updated => v_updated,
+            p_total_savings     => v_savings,
+            p_status_msg        => v_msg
+        );
+    EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Caught Expected Exception: ' || SQLERRM);
+    END;
+END;
+/
