@@ -85,11 +85,11 @@ SupplierTraceCTE AS (
         poi.ItemID,
         s.SupplierID,
         s.CompanyName AS PrimarySupplier,
-        s.ContactNo AS SupplierPhone
+        s.PhoneNo AS SupplierPhone
     FROM PurchaseOrderItem poi
     JOIN PurchaseOrder po ON poi.PurchaseOrderID = po.PurchaseOrderID
     JOIN Supplier s ON po.SupplierID = s.SupplierID
-    GROUP BY poi.ItemID, s.SupplierID, s.CompanyName, s.ContactNo
+    GROUP BY poi.ItemID, s.SupplierID, s.CompanyName, s.PhoneNo
 )
 SELECT 
     d.ItemID,
