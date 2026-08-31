@@ -262,13 +262,30 @@ PROMPT >>> VERIFYING PROCEDURE 1: sp_submit_refund_claim
 PROMPT ============================================================================
 
 DECLARE
+    v_test_order_id NUMBER := 999905;
     v_ref_id NUMBER;
     v_amt    NUMBER;
     v_msg    VARCHAR2(400);
 BEGIN
+    -- Setup temporary Completed test order within 7-day window
+    DELETE FROM ReturnItem WHERE RefundID IN (SELECT RefundID FROM Refund WHERE OrderID = v_test_order_id);
+    DELETE FROM Refund WHERE OrderID = v_test_order_id;
+    DELETE FROM Payment WHERE OrderID = v_test_order_id;
+    DELETE FROM OrderDetail WHERE OrderID = v_test_order_id;
+    DELETE FROM CustomerOrder WHERE OrderID = v_test_order_id;
+
+    INSERT INTO CustomerOrder (OrderID, OrderDate, OrderTime, OrderStatus, MemberID, BranchID)
+    VALUES (v_test_order_id, SYSDATE, '12:00', 'Completed', 1, 1);
+
+    INSERT INTO OrderDetail (ItemID, OrderID, Quantity, UnitPrice, Discount, LineStatus)
+    VALUES (1, v_test_order_id, 2, 25.90, 0.00, 'Active');
+
+    INSERT INTO Payment (PaymentID, PaymentMethod, PaymentDate, AmountPaid, TransactionNo, PaymentStatus, OrderID)
+    VALUES (999905, 'Card', SYSDATE, 51.80, 'TXN-TEST-999905', 'Paid', v_test_order_id);
+
     -- Test 1: Successful Refund Claim Submission
     sp_submit_refund_claim(
-        p_order_id      => 1,
+        p_order_id      => v_test_order_id,
         p_reason        => 'Milk bottle was sour and curdled upon delivery',
         p_return_method => 'Drop-off at Branch',
         p_photo_url     => 'http://proof.speedmart88.my/proof01.jpg',
@@ -284,7 +301,7 @@ BEGIN
     -- Test 2: Intentional Invalid Condition (Demonstrating Exception on 'Good' items)
     BEGIN
         sp_submit_refund_claim(
-            p_order_id      => 2,
+            p_order_id      => v_test_order_id,
             p_reason        => 'Changed my mind',
             p_return_method => 'In-Store Counter',
             p_photo_url     => 'http://proof.test/pic.jpg',
