@@ -81,15 +81,23 @@ WITH DefectiveItemsCTE AS (
     GROUP BY ri.ItemID, i.ItemName, i.Brand, ri.ItemCondition
 ),
 SupplierTraceCTE AS (
-    SELECT 
-        poi.ItemID,
-        s.SupplierID,
-        s.CompanyName AS PrimarySupplier,
-        s.PhoneNo AS SupplierPhone
-    FROM PurchaseOrderItem poi
-    JOIN PurchaseOrder po ON poi.PurchaseOrderID = po.PurchaseOrderID
-    JOIN Supplier s ON po.SupplierID = s.SupplierID
-    GROUP BY poi.ItemID, s.SupplierID, s.CompanyName, s.PhoneNo
+    SELECT ItemID, PrimarySupplier, SupplierPhone
+    FROM (
+        SELECT 
+            poi.ItemID,
+            s.SupplierID,
+            s.CompanyName AS PrimarySupplier,
+            s.PhoneNo AS SupplierPhone,
+            ROW_NUMBER() OVER (
+                PARTITION BY poi.ItemID 
+                ORDER BY SUM(poi.Quantity) DESC, MAX(po.OrderDate) DESC
+            ) AS rn
+        FROM PurchaseOrderItem poi
+        JOIN PurchaseOrder po ON poi.PurchaseOrderID = po.PurchaseOrderID
+        JOIN Supplier s ON po.SupplierID = s.SupplierID
+        GROUP BY poi.ItemID, s.SupplierID, s.CompanyName, s.PhoneNo
+    )
+    WHERE rn = 1
 )
 SELECT 
     d.ItemID,
@@ -108,13 +116,14 @@ LEFT JOIN SupplierTraceCTE st ON d.ItemID = st.ItemID;
 -- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 1]
 -- Format and Execute Query 1
 COLUMN ItemID FORMAT 9999 HEADING "Item"
-COLUMN ItemName FORMAT A28 HEADING "Product Description"
-COLUMN Brand FORMAT A15 HEADING "Brand"
-COLUMN DefectType FORMAT A12 HEADING "Defect Type"
+COLUMN ItemName FORMAT A26 HEADING "Product Description"
+COLUMN Brand FORMAT A12 HEADING "Brand"
+COLUMN DefectType FORMAT A10 HEADING "Defect"
 COLUMN ReturnIncidentCount FORMAT 999 HEADING "Claims"
 COLUMN TotalDefectiveUnits FORMAT 999 HEADING "Units"
 COLUMN TotalDefectLoss FORMAT $999,990.00 HEADING "Total Defect Loss"
-COLUMN LiableSupplier FORMAT A22 HEADING "Liable Supplier"
+COLUMN LiableSupplier FORMAT A26 HEADING "Primary Supplier"
+COLUMN SupplierContact FORMAT A12 HEADING "Contact No"
 COLUMN DefectSeverityRank FORMAT 99 HEADING "Rank"
 
 PROMPT
@@ -145,11 +154,11 @@ SELECT
     SUM(CASE WHEN r.RefundStatus IN ('Approved', 'Completed') THEN 1 ELSE 0 END) AS ApprovedCount,
     SUM(CASE WHEN r.RefundStatus = 'Rejected' THEN 1 ELSE 0 END) AS RejectedCount,
     SUM(CASE WHEN r.RefundStatus = 'Pending' THEN 1 ELSE 0 END) AS PendingCount,
-    ROUND(
+    NVL(ROUND(
         (SUM(CASE WHEN r.RefundStatus IN ('Approved', 'Completed') THEN 1 ELSE 0 END) / 
         NULLIF(COUNT(r.RefundID), 0)) * 100, 
         1
-    ) AS ApprovalRatePct,
+    ), 0.0) AS ApprovalRatePct,
     NVL(SUM(CASE WHEN r.RefundStatus IN ('Approved', 'Completed') THEN r.RefundAmount ELSE 0 END), 0) AS TotalRefundedAmount
 FROM Branch b
 LEFT JOIN CustomerOrder co ON b.BranchID = co.BranchID
@@ -159,8 +168,8 @@ GROUP BY b.BranchID, b.BranchName, b.State;
 -- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 2]
 -- Format and Execute Query 2
 COLUMN BranchID FORMAT 9999 HEADING "Br ID"
-COLUMN BranchName FORMAT A22 HEADING "Branch Name"
-COLUMN State FORMAT A12 HEADING "State"
+COLUMN BranchName FORMAT A24 HEADING "Branch Name"
+COLUMN State FORMAT A20 HEADING "State"
 COLUMN TotalClaimsLodged FORMAT 999 HEADING "Claims"
 COLUMN ApprovedCount FORMAT 999 HEADING "Approved"
 COLUMN RejectedCount FORMAT 999 HEADING "Rejected"

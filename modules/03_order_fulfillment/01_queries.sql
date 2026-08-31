@@ -112,7 +112,7 @@ GROUP BY b.BranchID, b.BranchName, fc.FulfillmentChannel;
 -- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 1]
 -- Format and Execute Query 1
 COLUMN BranchID FORMAT 9999 HEADING "Br ID"
-COLUMN BranchName FORMAT A22 HEADING "Branch Name"
+COLUMN BranchName FORMAT A24 HEADING "Branch Name"
 COLUMN FulfillmentChannel FORMAT A18 HEADING "Fulfillment Channel"
 COLUMN TotalOrders FORMAT 999 HEADING "Orders"
 COLUMN TotalGrossRevenue FORMAT $999,990.00 HEADING "Gross GMV"
