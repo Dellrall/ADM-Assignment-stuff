@@ -100,7 +100,7 @@ BEGIN
         p_refund_id,
         SYSDATE,
         TRIM(p_reason),
-        INITCAP(TRIM(p_return_method)),
+        TRIM(p_return_method),
         p_photo_url,
         p_claim_amount,
         'Customer lodged claim for ' || p_quantity || ' unit(s) of Item #' || p_item_id,
