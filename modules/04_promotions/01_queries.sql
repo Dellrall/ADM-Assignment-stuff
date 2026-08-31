@@ -18,6 +18,7 @@ PROMPT =========================================================================
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES & VIEWS)
 -- ----------------------------------------------------------------------------
 
+-- >>> [TASK 8 EXTRA EFFORT: SEQUENCE]
 -- 1. Sequence for Promotional Campaign Setup
 BEGIN
     EXECUTE IMMEDIATE 'DROP SEQUENCE seq_promo_id';
@@ -31,6 +32,7 @@ CREATE SEQUENCE seq_promo_id
     NOCACHE
     NOCYCLE;
 
+-- >>> [TASK 8 EXTRA EFFORT: PERFORMANCE INDEXES]
 -- 2. Performance Indexes for Promotion Date Filtering & Cart Repricing
 BEGIN
     EXECUTE IMMEDIATE 'DROP INDEX idx_promo_dates';
@@ -54,6 +56,7 @@ CREATE INDEX idx_promoitem_item
 -- ----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL QUERY 1 (STRATEGIC LEVEL)
 -- VIEW  : v_promo_campaign_margin_roi
+-- >>> [TASK 8 EXTRA EFFORT: ENTERPRISE VIEW 1 -> v_promo_campaign_margin_roi]
 -- SCENARIO: The Head of Marketing needs to measure campaign ROI and promotional 
 --   margin absorption. Joining Promotion, PromotionItem, Item, OrderDetail, 
 --   and CustomerOrder, this query calculates total orders touched, units sold, 
@@ -83,6 +86,7 @@ LEFT JOIN OrderDetail od ON pi.ItemID = od.ItemID
 LEFT JOIN CustomerOrder co ON od.OrderID = co.OrderID AND co.OrderStatus = 'Completed'
 GROUP BY p.PromotionID, p.StartDate, p.EndDate, p.DiscountAmount;
 
+-- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 1]
 -- Format and Execute Query 1
 COLUMN PromotionID FORMAT 999 HEADING "Promo ID"
 COLUMN StartDate FORMAT A10 HEADING "Start"
@@ -108,6 +112,7 @@ ORDER BY NetPromotionalYield DESC;
 -- ----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL QUERY 2 (TACTICAL LEVEL)
 -- VIEW  : v_markdown_basket_depth
+-- >>> [TASK 8 EXTRA EFFORT: ENTERPRISE VIEW 2 -> v_markdown_basket_depth]
 -- SCENARIO: The Merchandising Manager needs to evaluate markdown depth across 
 --   enrolled items to ensure discounts stimulate sales without destroying margins.
 --   This query calculates percentage markdown and remaining campaign duration.
@@ -135,6 +140,7 @@ JOIN PromotionItem pi ON p.PromotionID = pi.PromotionID
 JOIN Item i ON pi.ItemID = i.ItemID
 WHERE p.EndDate >= SYSDATE;
 
+-- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 2]
 -- Format and Execute Query 2
 COLUMN PromotionID FORMAT 999 HEADING "Promo"
 COLUMN ItemID FORMAT 9999 HEADING "Item"

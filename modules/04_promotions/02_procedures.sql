@@ -18,6 +18,7 @@ PROMPT =========================================================================
 --   Enforces valid date chronology (EndDate > StartDate) and pricing bounds
 --   (DiscountAmount < Item.Price).
 --   Task 8 Features: Sequence (seq_promo_id), Custom Exceptions, 
+-- >>> [TASK 8 EXTRA EFFORT: RAISE_APPLICATION_ERROR & EXCEPTION HANDLING SUITE]
 --                    Multi-table atomic inserts, RAISE_APPLICATION_ERROR.
 -- ----------------------------------------------------------------------------
 
@@ -29,6 +30,7 @@ CREATE OR REPLACE PROCEDURE sp_create_promotional_campaign (
     p_new_promo_id    OUT NUMBER,
     p_status_msg      OUT VARCHAR2
 ) AS
+    -- >>> [TASK 8 EXTRA EFFORT: EXCEPTION TYPE - CUSTOM USER EXCEPTION]
     -- Custom Exceptions
     e_invalid_dates      EXCEPTION;
     e_negative_discount  EXCEPTION;
@@ -125,6 +127,7 @@ END sp_create_promotional_campaign;
 -- SCENARIO: Dynamically evaluates and applies active promotional discounts 
 --   to pending order lines before final checkout settlement.
 --   Task 8 Features: PRAGMA EXCEPTION_INIT(-1438), Cursor update with FOR UPDATE.
+-- >>> [TASK 8 EXTRA EFFORT: RAISE_APPLICATION_ERROR & EXCEPTION HANDLING SUITE]
 -- ----------------------------------------------------------------------------
 
 CREATE OR REPLACE PROCEDURE sp_apply_order_promo_discount (
@@ -134,6 +137,7 @@ CREATE OR REPLACE PROCEDURE sp_apply_order_promo_discount (
     p_status_msg         OUT VARCHAR2
 ) AS
     -- PRAGMA Binding for Oracle Numeric Overflow (ORA-01438)
+    -- >>> [TASK 8 EXTRA EFFORT: EXCEPTION TYPE - PRAGMA EXCEPTION_INIT]
     e_numeric_overflow EXCEPTION;
     PRAGMA EXCEPTION_INIT(e_numeric_overflow, -1438);
 

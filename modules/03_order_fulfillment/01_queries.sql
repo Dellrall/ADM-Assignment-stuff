@@ -18,6 +18,7 @@ PROMPT =========================================================================
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES & VIEWS)
 -- ----------------------------------------------------------------------------
 
+-- >>> [TASK 8 EXTRA EFFORT: SEQUENCE]
 -- 1. Sequences for Orders and Payments
 BEGIN
     EXECUTE IMMEDIATE 'DROP SEQUENCE seq_order_id';
@@ -43,6 +44,7 @@ CREATE SEQUENCE seq_payment_id
     NOCACHE
     NOCYCLE;
 
+-- >>> [TASK 8 EXTRA EFFORT: PERFORMANCE INDEXES]
 -- 2. Performance Indexes for Order Fulfillment & Payment Reconciliation
 BEGIN
     EXECUTE IMMEDIATE 'DROP INDEX idx_order_branch_date';
@@ -66,6 +68,7 @@ CREATE INDEX idx_payment_order_method
 -- ----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL QUERY 1 (STRATEGIC LEVEL)
 -- VIEW  : v_omnichannel_fulfillment_rev
+-- >>> [TASK 8 EXTRA EFFORT: ENTERPRISE VIEW 1 -> v_omnichannel_fulfillment_rev]
 -- SCENARIO: The Operations Director needs to evaluate omnichannel performance.
 --   Business Rules 2 & 22 allow online/walk-in purchases fulfilled either via 
 --   In-Store Pickup (free) or Third-Party Delivery (delivery surcharge).
@@ -106,6 +109,7 @@ FROM FulfillmentClassification fc
 JOIN Branch b ON fc.BranchID = b.BranchID
 GROUP BY b.BranchID, b.BranchName, fc.FulfillmentChannel;
 
+-- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 1]
 -- Format and Execute Query 1
 COLUMN BranchID FORMAT 9999 HEADING "Br ID"
 COLUMN BranchName FORMAT A22 HEADING "Branch Name"
@@ -128,6 +132,7 @@ ORDER BY BranchID ASC, TotalGrossRevenue DESC;
 -- ----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL QUERY 2 (TACTICAL LEVEL)
 -- VIEW  : v_courier_sla_performance
+-- >>> [TASK 8 EXTRA EFFORT: ENTERPRISE VIEW 2 -> v_courier_sla_performance]
 -- SCENARIO: The Logistics Coordinator needs to track 3rd-party logistics (3PL)
 --   courier partner SLA performance (Rule 3). This query measures delivery 
 --   completion rates, active backlog, and logistics surcharge volume.
@@ -152,6 +157,7 @@ FROM DeliveryService ds
 LEFT JOIN Delivery d ON ds.DeliveryServiceID = d.DeliveryServiceID
 GROUP BY ds.DeliveryServiceID, ds.CompanyName, ds.ContactNo, ds.DeliveryCharge;
 
+-- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 2]
 -- Format and Execute Query 2
 COLUMN DeliveryServiceID FORMAT 999 HEADING "3PL ID"
 COLUMN CourierName FORMAT A25 HEADING "Courier Partner"

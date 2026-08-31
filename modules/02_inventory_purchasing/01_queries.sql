@@ -18,6 +18,7 @@ PROMPT =========================================================================
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES & VIEWS)
 -- ----------------------------------------------------------------------------
 
+-- >>> [TASK 8 EXTRA EFFORT: SEQUENCE]
 -- 1. Sequences for Procurement and Audit Logging
 BEGIN
     EXECUTE IMMEDIATE 'DROP SEQUENCE seq_po_id';
@@ -43,6 +44,7 @@ CREATE SEQUENCE seq_stock_log_id
     NOCACHE
     NOCYCLE;
 
+-- >>> [TASK 8 EXTRA EFFORT: PERFORMANCE INDEXES]
 -- 2. Performance Indexes for Inventory Monitoring & Perishables Tracking
 BEGIN
     EXECUTE IMMEDIATE 'DROP INDEX idx_stock_reorder_alert';
@@ -66,6 +68,7 @@ CREATE INDEX idx_batch_expiry_branch
 -- ----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL QUERY 1 (STRATEGIC LEVEL)
 -- VIEW  : v_branch_reorder_deficit
+-- >>> [TASK 8 EXTRA EFFORT: ENTERPRISE VIEW 1 -> v_branch_reorder_deficit]
 -- SCENARIO: The Supply Chain Director requires a multi-branch replenishment
 --   and procurement capital forecast. Under Business Rule 18, stock reorder 
 --   alerts trigger when Quantity <= ReorderLevel. This query calculates stock 
@@ -100,6 +103,7 @@ JOIN Item i ON s.ItemID = i.ItemID
 LEFT JOIN LatestItemCost lic ON i.ItemID = lic.ItemID
 WHERE s.Quantity <= s.ReorderLevel;
 
+-- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 1]
 -- Format and Execute Query 1
 COLUMN BranchID FORMAT 9999 HEADING "Br ID"
 COLUMN BranchName FORMAT A22 HEADING "Branch Name"
@@ -124,6 +128,7 @@ ORDER BY RequiredProcurementBudget DESC;
 -- ----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL QUERY 2 (TACTICAL LEVEL)
 -- VIEW  : v_batch_spoilage_exposure
+-- >>> [TASK 8 EXTRA EFFORT: ENTERPRISE VIEW 2 -> v_batch_spoilage_exposure]
 -- SCENARIO: The Quality Assurance (QA) Manager tracks perishable batch expiry 
 --   across branches. Business Rule 19 requires write-off of expired goods.
 --   This tactical query identifies batches expiring in 30/60/90 days and 
@@ -153,6 +158,7 @@ JOIN Branch b ON sb.BranchID = b.BranchID
 JOIN Item i ON sb.ItemID = i.ItemID
 WHERE sb.ExpiryDate IS NOT NULL;
 
+-- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 2]
 -- Format and Execute Query 2
 COLUMN BranchID FORMAT 9999 HEADING "Br ID"
 COLUMN BranchName FORMAT A20 HEADING "Branch Name"

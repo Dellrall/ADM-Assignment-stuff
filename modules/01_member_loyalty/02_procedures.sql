@@ -18,6 +18,7 @@ PROMPT =========================================================================
 --   Business Rule 1: Normal Member is free; VIP Member is RM12/yr (12-month validity).
 --   Business Rule 15: Single account per IC/Email.
 --   Task 8 Features: Sequence (seq_member_id), Custom Exceptions, 
+-- >>> [TASK 8 EXTRA EFFORT: RAISE_APPLICATION_ERROR & EXCEPTION HANDLING SUITE]
 --                    RAISE_APPLICATION_ERROR, DUP_VAL_ON_INDEX.
 -- ----------------------------------------------------------------------------
 
@@ -31,7 +32,8 @@ CREATE OR REPLACE PROCEDURE sp_register_or_renew_member (
     p_new_member_id   OUT NUMBER,
     p_status_msg      OUT VARCHAR2
 ) AS
-    -- User-defined exceptions
+    -- >>> [TASK 8 EXTRA EFFORT: EXCEPTION TYPE - CUSTOM USER EXCEPTION]
+-- User-defined exceptions
     e_invalid_email EXCEPTION;
     e_invalid_type  EXCEPTION;
     e_empty_name    EXCEPTION;
@@ -128,6 +130,7 @@ END sp_register_or_renew_member;
 --   Business Rules 7, 10, 11, 12: Points earned can be redeemed for vouchers;
 --   only 1 voucher per order; pre-discount total must meet minimum spend.
 --   Task 8 Features: PRAGMA EXCEPTION_INIT, User Exceptions, Row Locking.
+-- >>> [TASK 8 EXTRA EFFORT: RAISE_APPLICATION_ERROR & EXCEPTION HANDLING SUITE]
 -- ----------------------------------------------------------------------------
 
 CREATE OR REPLACE PROCEDURE sp_process_point_redemption (
@@ -138,6 +141,7 @@ CREATE OR REPLACE PROCEDURE sp_process_point_redemption (
     p_discount_applied OUT NUMBER
 ) AS
     -- PRAGMA Binding for Oracle Foreign Key integrity violation (ORA-02291)
+    -- >>> [TASK 8 EXTRA EFFORT: EXCEPTION TYPE - PRAGMA EXCEPTION_INIT]
     e_fk_violation EXCEPTION;
     PRAGMA EXCEPTION_INIT(e_fk_violation, -2291);
 

@@ -18,6 +18,7 @@ PROMPT =========================================================================
 --   Business Rules 2, 22, 28, 29: Pickup is free; generates unique 6-digit code;
 --   enforces customer cancellation safety limit (<3 cancellations/day).
 --   Task 8 Features: Sequence (seq_order_id), Autonomous code generation,
+-- >>> [TASK 8 EXTRA EFFORT: RAISE_APPLICATION_ERROR & EXCEPTION HANDLING SUITE]
 --                    Custom Exceptions, RAISE_APPLICATION_ERROR.
 -- ----------------------------------------------------------------------------
 
@@ -29,6 +30,7 @@ CREATE OR REPLACE PROCEDURE sp_create_pickup_order (
     p_pickup_code  OUT VARCHAR2,
     p_status_msg   OUT VARCHAR2
 ) AS
+    -- >>> [TASK 8 EXTRA EFFORT: EXCEPTION TYPE - CUSTOM USER EXCEPTION]
     -- Custom Exceptions
     e_inactive_member    EXCEPTION;
     e_inactive_branch    EXCEPTION;
@@ -137,6 +139,7 @@ END sp_create_pickup_order;
 --   Business Rules 8, 30: Settlements via Cash, Card, E-Wallet, Online Banking;
 --   awards 1 point per RM 1.00 spent on completed orders.
 --   Task 8 Features: PRAGMA EXCEPTION_INIT(-1), Sequence (seq_payment_id),
+-- >>> [TASK 8 EXTRA EFFORT: RAISE_APPLICATION_ERROR & EXCEPTION HANDLING SUITE]
 --                    Points accrual transaction.
 -- ----------------------------------------------------------------------------
 
@@ -150,6 +153,7 @@ CREATE OR REPLACE PROCEDURE sp_settle_order_payment (
     p_status_msg       OUT VARCHAR2
 ) AS
     -- PRAGMA Binding for Unique Constraint Violation (ORA-00001)
+    -- >>> [TASK 8 EXTRA EFFORT: EXCEPTION TYPE - PRAGMA EXCEPTION_INIT]
     e_duplicate_txn EXCEPTION;
     PRAGMA EXCEPTION_INIT(e_duplicate_txn, -1);
 

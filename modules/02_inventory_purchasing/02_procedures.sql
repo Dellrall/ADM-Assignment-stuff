@@ -17,6 +17,7 @@ PROMPT =========================================================================
 -- SCENARIO: Handles physical PO delivery intake at branch warehouse.
 --   Business Rule 21: PO status cannot be 'Received' until line items are verified.
 --   Task 8 Features: MERGE statement, Multiple table atomic updates,
+-- >>> [TASK 8 EXTRA EFFORT: RAISE_APPLICATION_ERROR & EXCEPTION HANDLING SUITE]
 --                    Custom Exceptions, Sequence (seq_stock_log_id), RAISE_APPLICATION_ERROR.
 -- ----------------------------------------------------------------------------
 
@@ -27,7 +28,8 @@ CREATE OR REPLACE PROCEDURE sp_receive_purchase_order (
     p_items_received      OUT NUMBER,
     p_status_msg          OUT VARCHAR2
 ) AS
-    -- User-defined exceptions
+    -- >>> [TASK 8 EXTRA EFFORT: EXCEPTION TYPE - CUSTOM USER EXCEPTION]
+-- User-defined exceptions
     e_po_not_approved       EXCEPTION;
     e_unauthorized_employee EXCEPTION;
     e_empty_po              EXCEPTION;
@@ -149,6 +151,7 @@ END sp_receive_purchase_order;
 --   Business Rule 19: Expired/damaged goods must be deducted from stock and 
 --   logged in StockLog with employee association.
 --   Task 8 Features: PRAGMA EXCEPTION_INIT(-2290), User Exceptions.
+-- >>> [TASK 8 EXTRA EFFORT: RAISE_APPLICATION_ERROR & EXCEPTION HANDLING SUITE]
 -- ----------------------------------------------------------------------------
 
 CREATE OR REPLACE PROCEDURE sp_adjust_damaged_stock (
@@ -161,6 +164,7 @@ CREATE OR REPLACE PROCEDURE sp_adjust_damaged_stock (
     p_status_msg    OUT VARCHAR2
 ) AS
     -- PRAGMA Binding for Oracle Check Constraint Violation (ORA-02290)
+    -- >>> [TASK 8 EXTRA EFFORT: EXCEPTION TYPE - PRAGMA EXCEPTION_INIT]
     e_chk_violation EXCEPTION;
     PRAGMA EXCEPTION_INIT(e_chk_violation, -2290);
 

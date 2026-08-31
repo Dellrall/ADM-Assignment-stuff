@@ -18,6 +18,7 @@ PROMPT =========================================================================
 -- TASK 8: EXTRA EFFORTS (SEQUENCES, INDEXES & VIEWS)
 -- ----------------------------------------------------------------------------
 
+-- >>> [TASK 8 EXTRA EFFORT: SEQUENCE]
 -- 1. Sequence for Member Registration
 BEGIN
     EXECUTE IMMEDIATE 'DROP SEQUENCE seq_member_id';
@@ -31,6 +32,7 @@ CREATE SEQUENCE seq_member_id
     NOCACHE
     NOCYCLE;
 
+-- >>> [TASK 8 EXTRA EFFORT: PERFORMANCE INDEXES]
 -- 2. Performance Indexes for Loyalty & Redemption Analytics
 BEGIN
     EXECUTE IMMEDIATE 'DROP INDEX idx_member_status_type';
@@ -54,6 +56,7 @@ CREATE INDEX idx_redemption_member_order
 -- ----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL QUERY 1 (STRATEGIC LEVEL)
 -- VIEW  : v_member_churn_risk
+-- >>> [TASK 8 EXTRA EFFORT: ENTERPRISE VIEW 1 -> v_member_churn_risk]
 -- SCENARIO: The Chief Marketing Officer (CMO) requires an enterprise-level
 --   churn and inactivity risk matrix. Under Business Rule 14, members without 
 --   order activity for 12 months are flagged 'Inactive'. This strategic query 
@@ -101,6 +104,7 @@ SELECT
     DENSE_RANK() OVER (ORDER BY LifetimeSpend DESC) AS SpendRank
 FROM MemberOrderSummary;
 
+-- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 1]
 -- Format and Execute Query 1
 COLUMN MemberID FORMAT 9999 HEADING "Mem ID"
 COLUMN MemberName FORMAT A20 HEADING "Member Name"
@@ -125,6 +129,7 @@ ORDER BY SpendRank ASC;
 -- ----------------------------------------------------------------------------
 -- TASK 4: ANALYTICAL QUERY 2 (TACTICAL LEVEL)
 -- VIEW  : v_voucher_conversion_roi
+-- >>> [TASK 8 EXTRA EFFORT: ENTERPRISE VIEW 2 -> v_voucher_conversion_roi]
 -- SCENARIO: The Loyalty Program Director needs to evaluate voucher conversion 
 --   efficiency and points burn rate across campaigns. Business Rules 8, 10, and 12
 --   stipulate 1 pt per RM1, single voucher per order, and minimum spend rules.
@@ -152,6 +157,7 @@ GROUP BY
     v.VoucherID, v.VoucherName, v.VoucherType, 
     v.DiscountValue, v.MinimumSpend, v.RequiredPoint;
 
+-- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 2]
 -- Format and Execute Query 2
 COLUMN VoucherID FORMAT 999 HEADING "Vch ID"
 COLUMN VoucherName FORMAT A25 HEADING "Voucher Campaign"

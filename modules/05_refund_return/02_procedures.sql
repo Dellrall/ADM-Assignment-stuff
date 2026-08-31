@@ -18,6 +18,7 @@ PROMPT =========================================================================
 --   Business Rule 31: Return/refund requests must be submitted within 7 days of order.
 --   Business Rule 33: Only damaged, defective, or expired goods eligible for refund.
 --   Task 8 Features: Sequence (seq_refund_id), Custom Exceptions, 
+-- >>> [TASK 8 EXTRA EFFORT: RAISE_APPLICATION_ERROR & EXCEPTION HANDLING SUITE]
 --                    Multi-table atomic inserts, RAISE_APPLICATION_ERROR.
 -- ----------------------------------------------------------------------------
 
@@ -33,7 +34,8 @@ CREATE OR REPLACE PROCEDURE sp_submit_refund_claim (
     p_claim_amount  OUT NUMBER,
     p_status_msg    OUT VARCHAR2
 ) AS
-    -- Custom User Exceptions
+    -- >>> [TASK 8 EXTRA EFFORT: EXCEPTION TYPE - CUSTOM USER EXCEPTION]
+-- Custom User Exceptions
     e_order_not_completed EXCEPTION;
     e_claim_window_passed EXCEPTION;
     e_invalid_condition   EXCEPTION;
@@ -164,6 +166,7 @@ END sp_submit_refund_claim;
 -- SCENARIO: Store manager reviews and approves/rejects a refund claim.
 --   Business Rule 32: Approved refunds credited back to original payment within 5-7 days.
 --   Task 8 Features: PRAGMA EXCEPTION_INIT(-2290), Cascading status updates.
+-- >>> [TASK 8 EXTRA EFFORT: RAISE_APPLICATION_ERROR & EXCEPTION HANDLING SUITE]
 -- ----------------------------------------------------------------------------
 
 CREATE OR REPLACE PROCEDURE sp_adjudicate_refund_claim (
@@ -173,10 +176,12 @@ CREATE OR REPLACE PROCEDURE sp_adjudicate_refund_claim (
     p_status_msg      OUT VARCHAR2
 ) AS
     -- PRAGMA Binding for Oracle Check Constraint Violation (ORA-02290)
+    -- >>> [TASK 8 EXTRA EFFORT: EXCEPTION TYPE - PRAGMA EXCEPTION_INIT]
     e_chk_constraint EXCEPTION;
     PRAGMA EXCEPTION_INIT(e_chk_constraint, -2290);
 
-    -- Custom User Exceptions
+    -- >>> [TASK 8 EXTRA EFFORT: EXCEPTION TYPE - CUSTOM USER EXCEPTION]
+-- Custom User Exceptions
     e_claim_not_pending EXCEPTION;
     e_invalid_decision  EXCEPTION;
 
