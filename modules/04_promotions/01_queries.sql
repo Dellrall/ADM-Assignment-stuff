@@ -143,8 +143,8 @@ JOIN Item i ON pi.ItemID = i.ItemID;
 -- Format and Execute Query 2
 COLUMN PromotionID FORMAT 999 HEADING "Promo"
 COLUMN ItemID FORMAT 9999 HEADING "Item"
-COLUMN ItemName FORMAT A22 HEADING "Product Description"
-COLUMN Brand FORMAT A16 HEADING "Brand"
+COLUMN ItemName FORMAT A30 HEADING "Product Description"
+COLUMN Brand FORMAT A14 HEADING "Brand"
 COLUMN OriginalRetailPrice FORMAT $990.00 HEADING "Base Price"
 COLUMN PromoMarkdown FORMAT $990.00 HEADING "Discount"
 COLUMN DiscountedPrice FORMAT $990.00 HEADING "Promo Price"

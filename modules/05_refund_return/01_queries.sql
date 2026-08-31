@@ -108,7 +108,7 @@ LEFT JOIN SupplierTraceCTE st ON d.ItemID = st.ItemID;
 -- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 1]
 -- Format and Execute Query 1
 COLUMN ItemID FORMAT 9999 HEADING "Item"
-COLUMN ItemName FORMAT A20 HEADING "Product Description"
+COLUMN ItemName FORMAT A28 HEADING "Product Description"
 COLUMN Brand FORMAT A15 HEADING "Brand"
 COLUMN DefectType FORMAT A12 HEADING "Defect Type"
 COLUMN ReturnIncidentCount FORMAT 999 HEADING "Claims"
