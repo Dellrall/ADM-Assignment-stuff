@@ -8,6 +8,20 @@ SET DEFINE OFF;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
 SET FEEDBACK ON;
 
+-- Ensure sequences exist for autonomous execution
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE SEQUENCE seq_order_id START WITH 1000 INCREMENT BY 1 NOCACHE NOCYCLE';
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END;
+/
+BEGIN
+    EXECUTE IMMEDIATE 'CREATE SEQUENCE seq_payment_id START WITH 1000 INCREMENT BY 1 NOCACHE NOCYCLE';
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END;
+/
+
 PROMPT ============================================================================
 PROMPT >>> MODULE 3: ORDER, PAYMENT & FULFILLMENT - STORED PROCEDURES
 PROMPT ============================================================================
@@ -70,9 +84,9 @@ BEGIN
         RAISE e_daily_limit_excess;
     END IF;
 
-    -- 4. Generate Unique 6-Digit Pickup Code (e.g. PK8492) (Rule 29)
-    p_pickup_code := 'PK' || LPAD(TO_CHAR(TRUNC(DBMS_RANDOM.VALUE(1000, 9999))), 4, '0');
+    -- 4. Generate Unique Order ID and Pickup Code (Rule 29)
     p_order_id    := seq_order_id.NEXTVAL;
+    p_pickup_code := 'PKUP' || LPAD(TO_CHAR(p_order_id), 6, '0');
 
     -- 5. Atomic Insertion into CustomerOrder and Pickup
     INSERT INTO CustomerOrder (
