@@ -4,6 +4,7 @@
 -- AUTHOR : Member 3
 -- ============================================================================
 
+SET DEFINE OFF;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
 SET FEEDBACK ON;
 

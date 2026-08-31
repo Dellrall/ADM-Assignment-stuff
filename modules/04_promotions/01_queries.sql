@@ -4,6 +4,7 @@
 -- AUTHOR : Member 4
 -- ============================================================================
 
+SET DEFINE OFF;
 SET SERVEROUTPUT ON SIZE UNLIMITED;
 SET LINESIZE 200;
 SET PAGESIZE 50;
