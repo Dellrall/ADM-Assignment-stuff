@@ -128,7 +128,7 @@ SELECT
     p.DiscountAmount AS PromoMarkdown,
     (i.Price - p.DiscountAmount) AS DiscountedPrice,
     ROUND((p.DiscountAmount / i.Price) * 100, 2) AS MarkdownPercentage,
-    ROUND(p.EndDate - SYSDATE) AS DaysRemaining,
+    ROUND(p.EndDate - p.StartDate) AS CampaignDays,
     CASE 
         WHEN (p.DiscountAmount / i.Price) >= 0.30 THEN 'DEEP DISCOUNT (>30% Cut)'
         WHEN (p.DiscountAmount / i.Price) >= 0.15 THEN 'STANDARD PROMO (15-30% Cut)'
@@ -137,8 +137,7 @@ SELECT
     DENSE_RANK() OVER (ORDER BY (p.DiscountAmount / i.Price) DESC) AS MarkdownRank
 FROM Promotion p
 JOIN PromotionItem pi ON p.PromotionID = pi.PromotionID
-JOIN Item i ON pi.ItemID = i.ItemID
-WHERE p.EndDate >= SYSDATE;
+JOIN Item i ON pi.ItemID = i.ItemID;
 
 -- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 2]
 -- Format and Execute Query 2
@@ -149,8 +148,8 @@ COLUMN Brand FORMAT A16 HEADING "Brand"
 COLUMN OriginalRetailPrice FORMAT $990.00 HEADING "Base Price"
 COLUMN PromoMarkdown FORMAT $990.00 HEADING "Discount"
 COLUMN DiscountedPrice FORMAT $990.00 HEADING "Promo Price"
-COLUMN MarkdownPercentage FORMAT 990.00 HEADING "Markdown %"
-COLUMN DaysRemaining FORMAT 999 HEADING "Days Left"
+COLUMN MarkdownPercentage FORMAT 9990.00 HEADING "Markdown %"
+COLUMN CampaignDays FORMAT 999 HEADING "Days"
 COLUMN MarkdownTier FORMAT A25 HEADING "Markdown Band"
 COLUMN MarkdownRank FORMAT 99 HEADING "Rank"
 
