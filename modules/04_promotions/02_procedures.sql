@@ -226,6 +226,11 @@ DECLARE
     v_promo_id NUMBER;
     v_msg      VARCHAR2(400);
 BEGIN
+    -- Cleanup any existing test promotion records from prior runs
+    DELETE FROM PromotionItem WHERE PromotionID >= 1000;
+    DELETE FROM Promotion WHERE PromotionID >= 1000;
+    COMMIT;
+
     -- Test 1: Successful Campaign Creation
     sp_create_promotional_campaign(
         p_discount_amount => 2.50,
