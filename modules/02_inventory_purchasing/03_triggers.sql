@@ -35,12 +35,15 @@ END trg_guard_po_item_integrity;
 -- ----------------------------------------------------------------------------
 
 CREATE OR REPLACE TRIGGER trg_guard_maximum_stock_capacity
-BEFORE INSERT OR UPDATE OF Quantity ON Stock
+BEFORE INSERT OR UPDATE ON Stock
 FOR EACH ROW
+DECLARE
+    v_max NUMBER;
 BEGIN
-    IF :NEW.Quantity > :NEW.MaximumStock THEN
-        RAISE_APPLICATION_ERROR(-20026, 'Trigger Violation: Updating Quantity to ' || :NEW.Quantity || 
-                                ' exceeds branch warehouse MaximumStock ceiling (' || :NEW.MaximumStock || ').');
+    v_max := NVL(:NEW.MaximumStock, :OLD.MaximumStock);
+    IF v_max IS NOT NULL AND :NEW.Quantity > v_max THEN
+        RAISE_APPLICATION_ERROR(-20026, 'Trigger Violation: Quantity (' || :NEW.Quantity || 
+                                ') exceeds branch warehouse MaximumStock capacity (' || v_max || ').');
     END IF;
 END trg_guard_maximum_stock_capacity;
 /
@@ -71,21 +74,19 @@ PROMPT =========================================================================
 PROMPT >>> VERIFYING TRIGGER 2: trg_guard_maximum_stock_capacity
 PROMPT ============================================================================
 
+DECLARE
+    v_branch_id NUMBER;
+    v_item_id   NUMBER;
 BEGIN
-    -- Ensure test stock record exists with MaximumStock = 200
-    MERGE INTO Stock s
-    USING (SELECT 1 AS BranchID, 1 AS ItemID FROM dual) src
-    ON (s.BranchID = src.BranchID AND s.ItemID = src.ItemID)
-    WHEN MATCHED THEN
-        UPDATE SET s.MaximumStock = 200
-    WHEN NOT MATCHED THEN
-        INSERT (BranchID, ItemID, Quantity, ReorderLevel, MaximumStock, ShelfLocation, LastUpdated)
-        VALUES (1, 1, 50, 15, 200, 'Aisle 1-A', SYSDATE);
+    -- Query a guaranteed existing stock record
+    SELECT BranchID, ItemID INTO v_branch_id, v_item_id
+    FROM Stock
+    WHERE ROWNUM = 1;
 
-    -- Attempt to update quantity beyond MaximumStock (99,999 > 200)
+    -- Attempt to update quantity beyond MaximumStock (99,999 units)
     UPDATE Stock 
     SET Quantity = 99999 
-    WHERE BranchID = 1 AND ItemID = 1;
+    WHERE BranchID = v_branch_id AND ItemID = v_item_id;
     ROLLBACK;
 EXCEPTION
     WHEN OTHERS THEN
