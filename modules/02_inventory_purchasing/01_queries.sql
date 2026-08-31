@@ -103,13 +103,13 @@ JOIN Item i ON s.ItemID = i.ItemID
 LEFT JOIN LatestItemCost lic ON i.ItemID = lic.ItemID
 WHERE s.Quantity <= s.ReorderLevel;
 
--- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 1]
+-- -- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 1]
 -- Format and Execute Query 1
 COLUMN BranchID FORMAT 9999 HEADING "Br ID"
-COLUMN BranchName FORMAT A24 HEADING "Branch Name"
-COLUMN State FORMAT A20 HEADING "State"
+COLUMN BranchName FORMAT A26 HEADING "Branch Name"
+COLUMN State FORMAT A19 HEADING "State"
 COLUMN ItemID FORMAT 9999 HEADING "Item ID"
-COLUMN ItemName FORMAT A28 HEADING "Item Name"
+COLUMN ItemName FORMAT A30 HEADING "Item Name"
 COLUMN Brand FORMAT A12 HEADING "Brand"
 COLUMN CurrentQty FORMAT 999 HEADING "Qty"
 COLUMN ReorderLevel FORMAT 999 HEADING "Min"
@@ -133,9 +133,8 @@ ORDER BY RequiredProcurementBudget DESC;
 -- VIEW  : v_batch_spoilage_exposure
 -- >>> [TASK 8 EXTRA EFFORT: ENTERPRISE VIEW 2 -> v_batch_spoilage_exposure]
 -- SCENARIO: The Quality Assurance (QA) Manager tracks perishable batch expiry 
---   across branches. Business Rule 19 requires write-off of expired goods.
---   This tactical query identifies batches expiring in 30/60/90 days and 
---   calculates financial inventory at risk.
+--   dates under FEFO guidelines. Business Rules 19 and 22 enforce that expired 
+--   batches cannot be sold or transferred, requiring immediate quarantine.
 -- ----------------------------------------------------------------------------
 
 CREATE OR REPLACE VIEW v_batch_spoilage_exposure AS
@@ -164,16 +163,16 @@ WHERE sb.ExpiryDate IS NOT NULL;
 -- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 2]
 -- Format and Execute Query 2
 COLUMN BranchID FORMAT 9999 HEADING "Br ID"
-COLUMN BranchName FORMAT A20 HEADING "Branch Name"
+COLUMN BranchName FORMAT A26 HEADING "Branch Name"
 COLUMN BatchID FORMAT 9999 HEADING "Batch"
 COLUMN ItemID FORMAT 9999 HEADING "Item ID"
-COLUMN ItemName FORMAT A28 HEADING "Perishable Product"
+COLUMN ItemName FORMAT A30 HEADING "Perishable Product"
 COLUMN BatchQuantity FORMAT 999 HEADING "Batch Qty"
 COLUMN ReceivedDate FORMAT A10 HEADING "Received"
 COLUMN ExpiryDate FORMAT A10 HEADING "Expiry"
 COLUMN DaysUntilExpiry FORMAT 9990 HEADING "Days Left"
 COLUMN RetailValueAtRisk FORMAT $999,990.00 HEADING "Value at Risk"
-COLUMN SpoilageRiskStatus FORMAT A30 HEADING "Spoilage Risk Classification"
+COLUMN SpoilageRiskStatus FORMAT A36 HEADING "Spoilage Risk Classification"
 
 PROMPT
 PROMPT ============================================================================

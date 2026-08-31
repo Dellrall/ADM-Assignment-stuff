@@ -168,7 +168,7 @@ GROUP BY b.BranchID, b.BranchName, b.State;
 -- >>> [TASK 8 EXTRA EFFORT: SQL*PLUS OUTPUT FORMATTING 2]
 -- Format and Execute Query 2
 COLUMN BranchID FORMAT 9999 HEADING "Br ID"
-COLUMN BranchName FORMAT A24 HEADING "Branch Name"
+COLUMN BranchName FORMAT A26 HEADING "Branch Name"
 COLUMN State FORMAT A20 HEADING "State"
 COLUMN TotalClaimsLodged FORMAT 999 HEADING "Claims"
 COLUMN ApprovedCount FORMAT 999 HEADING "Approved"
