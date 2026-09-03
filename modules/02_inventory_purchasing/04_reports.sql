@@ -178,14 +178,14 @@ END sp_rpt_branch_inventory_audit;
 
 
 -- ----------------------------------------------------------------------------
--- REPORT 2: sp_rpt_supplier_procurement_dossier
+-- REPORT 2: sp_rpt_supplier_proc_dossier
 -- CLASSIFICATION: Procurement Summary & PO Hierarchy Report
 -- COMPLEXITY: 3-Tier Parameterized Nested Cursor (Supplier -> POs -> PO Items)
 -- SCENARIO: Procurement executives review historical purchasing orders and item-level
 --   expenditures associated with each authorized supplier.
 -- ----------------------------------------------------------------------------
 
-CREATE OR REPLACE PROCEDURE sp_rpt_supplier_procurement_dossier (
+CREATE OR REPLACE PROCEDURE sp_rpt_supplier_proc_dossier (
     p_supplier_id IN NUMBER
 ) AS
     -- 1. Parent Cursor: Supplier Profile
@@ -284,7 +284,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(' Total Purchase Orders Issued: ' || v_po_count);
     DBMS_OUTPUT.PUT_LINE(' Total Spend Disbursed to Supplier: RM ' || TO_CHAR(v_supplier_total_spend, 'FM999,990.00'));
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 105, '='));
-END sp_rpt_supplier_procurement_dossier;
+END sp_rpt_supplier_proc_dossier;
 /
 
 
@@ -299,6 +299,6 @@ EXEC sp_rpt_branch_inventory_audit(1);
 
 PROMPT
 PROMPT ============================================================================
-PROMPT >>> EXECUTING REPORT 2: sp_rpt_supplier_procurement_dossier (Supplier ID: 1)
+PROMPT >>> EXECUTING REPORT 2: sp_rpt_supplier_proc_dossier (Supplier ID: 1)
 PROMPT ============================================================================
-EXEC sp_rpt_supplier_procurement_dossier(1);
+EXEC sp_rpt_supplier_proc_dossier(1);

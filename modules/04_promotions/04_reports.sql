@@ -15,14 +15,14 @@ PROMPT >>> MODULE 4: PROMOTION & MARKETING MANAGEMENT - MANAGEMENT REPORTS
 PROMPT ============================================================================
 
 -- ----------------------------------------------------------------------------
--- REPORT 1: sp_rpt_active_promotions_catalog
+-- REPORT 1: sp_rpt_active_promo_catalog
 -- CLASSIFICATION: Weekly Promotional Flyer & Markdown Catalog
 -- COMPLEXITY: Parameterized Nested Cursors (Campaigns -> Enrolled Items)
 -- SCENARIO: Weekly marketing circular distributed across retail stores detailing
 --   active discounts, enrolled products, and customer savings margins.
 -- ----------------------------------------------------------------------------
 
-CREATE OR REPLACE PROCEDURE sp_rpt_active_promotions_catalog AS
+CREATE OR REPLACE PROCEDURE sp_rpt_active_promo_catalog AS
     -- 1. Parent Cursor: Active Promotions
     CURSOR c_promos IS
         SELECT 
@@ -104,7 +104,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE(' CATALOG SUMMARY: ' || v_active_campaign_cnt || ' Active Campaigns | ' || 
                          v_total_items_on_sale || ' Discounted Products Nationwide.');
     DBMS_OUTPUT.PUT_LINE(RPAD('=', 100, '='));
-END sp_rpt_active_promotions_catalog;
+END sp_rpt_active_promo_catalog;
 /
 
 
@@ -219,9 +219,9 @@ END sp_rpt_promotion_sales_impact;
 -- ----------------------------------------------------------------------------
 PROMPT
 PROMPT ============================================================================
-PROMPT >>> EXECUTING REPORT 1: sp_rpt_active_promotions_catalog
+PROMPT >>> EXECUTING REPORT 1: sp_rpt_active_promo_catalog
 PROMPT ============================================================================
-EXEC sp_rpt_active_promotions_catalog;
+EXEC sp_rpt_active_promo_catalog;
 
 PROMPT
 PROMPT ============================================================================
